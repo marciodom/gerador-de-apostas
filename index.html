@@ -823,8 +823,8 @@
                         numerosFrequencia: {},
                         ultimaAparicao: {},
                         ultimaAparicaoCentena: {},
-                        ultimaAparicaoFinal: {},   // novo
-                        ultimaAparicaoPrefixo: {},  // novo
+                        ultimaAparicaoFinal: {},
+                        ultimaAparicaoPrefixo: {},
                         ciclosDetectados: {}
                     }
                 };
@@ -1079,10 +1079,13 @@
                     frias.push(...restantes);
                 }
 
+                // CORREÇÃO: Probabilidade real baseada em frequência E atraso
+                // Quanto maior a frequência e maior o atraso, maior a probabilidade
                 const probabilisticas = Object.entries(frequenciaCentenas)
                     .map(([cent, freq]) => {
                         const atraso = atrasoCentenas[cent] || 0;
-                        const score = freq * 2 + (10 / (atraso + 1));
+                        // Fórmula: (frequência * 3) + (atraso * 2) - dá peso para números que saem muito E estão atrasados
+                        const score = (freq * 3) + (atraso * 2);
                         return { cent, score };
                     })
                     .sort((a, b) => b.score - a.score)
@@ -1151,12 +1154,13 @@
                     .slice(0,10)
                     .map(n=>n[0]);
                 
-                // 3. Milhares probabilísticas (score = freq*2 + 10/(atraso+1))
+                // 3. CORREÇÃO: Milhares probabilísticas - baseado em frequência E atraso
                 const ultimoIdx = historico.totalSorteios - 1;
                 const milharesProb = Object.entries(historico.agregados.numerosFrequencia)
                     .map(([num, freq]) => {
                         const atraso = ultimoIdx - (historico.agregados.ultimaAparicao[num] || 0);
-                        const score = freq * 2 + (10 / (atraso + 1));
+                        // Fórmula melhorada: (frequência * 4) + (atraso * 3) - dá peso maior para números que saem muito e estão atrasados
+                        const score = (freq * 4) + (atraso * 3);
                         return { num, score };
                     })
                     .sort((a, b) => b.score - a.score)
@@ -1184,7 +1188,7 @@
                         const freq = freqFinais[d] || 0;
                         const atraso = ultimoIdx - (historico.agregados.ultimaAparicaoFinal[d] || -1); // se nunca apareceu, atraso = ultimoIdx+1
                         const atrasoValido = atraso >= 0 ? atraso : ultimoIdx + 1;
-                        const score = freq * 2 + (10 / (atrasoValido + 1));
+                        const score = (freq * 4) + (atrasoValido * 3);
                         return { d, score };
                     })
                     .sort((a, b) => b.score - a.score)
@@ -1212,7 +1216,7 @@
                         const freq = freqPrefixos[p] || 0;
                         const atraso = ultimoIdx - (historico.agregados.ultimaAparicaoPrefixo[p] || -1);
                         const atrasoValido = atraso >= 0 ? atraso : ultimoIdx + 1;
-                        const score = freq * 2 + (10 / (atrasoValido + 1));
+                        const score = (freq * 4) + (atrasoValido * 3);
                         return { p, score };
                     })
                     .sort((a, b) => b.score - a.score)
@@ -1224,7 +1228,7 @@
                     // Milhares
                     { title: "🔥 10 Milhares Mais Quentes", numbers: milharesQuentes, description: "Números que mais apareceram neste turno (frequência histórica)", type: "hot" },
                     { title: "❄️ 10 Milhares Mais Frios", numbers: milharesFrios, description: "Números mais atrasados (ciclos longos sem aparecer)", type: "cold" },
-                    { title: "📈 10 Milhares Probabilísticas", numbers: milharesProb, description: "Milhares com maior chance com base em frequência e recência", type: "trend" },
+                    { title: "📈 10 Milhares Probabilísticas", numbers: milharesProb, description: "Milhares com maior chance baseada em frequência + atraso", type: "trend" },
                     
                     // Dezenas
                     { title: "🎯 10 Dezenas Mais Quentes", numbers: dezenasQuentes, description: "Finais (últimos 2 dígitos) mais frequentes", type: "hot" },
@@ -1244,7 +1248,7 @@
                 const centenasCards = [
                     { title: "🔥 10 Centenas Mais Quentes", numbers: centenasData.quentes, description: "Centenas (3 últimos dígitos) mais frequentes no histórico", type: "hot" },
                     { title: "❄️ 10 Centenas Mais Frias", numbers: centenasData.frias, description: "Centenas menos sorteadas ou nunca sorteadas", type: "cold" },
-                    { title: "📈 10 Centenas Mais Probabilísticas", numbers: centenasData.probabilisticas, description: "Centenas com maior chance com base em frequência e recência", type: "trend" }
+                    { title: "📈 10 Centenas + Probabilísticas", numbers: centenasData.probabilisticas, description: "Centenas com maior chance baseada em frequência + atraso", type: "trend" }
                 ];
                 renderizarCardsNaSecao(centenasCards, centenasContainer);
                 
