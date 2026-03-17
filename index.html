@@ -585,8 +585,8 @@
         <h2 class="section-title">🎯 Projeções do Último Sorteio</h2>
         <div class="cards-container" id="projecoesCards"></div>
         
-        <!-- NOVA SEÇÃO: Previsão por Casa Decimal -->
-        <h2 class="section-title">🔢 Previsão por Casa Decimal</h2>
+        <!-- NOVA SEÇÃO: Previsão com Machine Learning -->
+        <h2 class="section-title">🤖 Previsão com Machine Learning</h2>
         <div class="cards-container" id="previsaoDigitoCards"></div>
         
         <!-- Calculadora de Prêmios -->
@@ -815,9 +815,13 @@
                 return analise;
             }
             
+            // ==================== FUNÇÃO CORRIGIDA - CORAÇÃO DO SISTEMA ====================
             function analisarHistoricoTurno(turno) {
                 const sorteios = dadosLotece[turno];
                 if (!sorteios) return null;
+                
+                // CRÍTICO: Inverter a ordem para que o primeiro seja o mais recente
+                const sorteiosInvertidos = [...sorteios].reverse();
                 
                 const historico = {
                     totalSorteios: sorteios.length,
@@ -849,7 +853,8 @@
                     }
                 };
                 
-                sorteios.forEach((sorteio, idx) => {
+                // Agora processa na ordem invertida (mais recente primeiro)
+                sorteiosInvertidos.forEach((sorteio, idx) => {
                     const analise = analisarSorteio(sorteio);
                     historico.analises.push(analise);
                     
@@ -857,6 +862,8 @@
                         historico.agregados.numerosFrequencia[num] = 
                             (historico.agregados.numerosFrequencia[num] || 0) + 1;
                         
+                        // IMPORTANTE: A última aparição agora é baseada na posição invertida
+                        // 0 = mais recente, 1 = segundo mais recente, etc.
                         historico.agregados.ultimaAparicao[num] = idx;
                         
                         analise.padroesIndividuais[num].forEach(padrao => {
@@ -880,8 +887,9 @@
                         });
                     });
                     
+                    // Análise de deslocamento (agora com ordem correta)
                     if (idx > 0) {
-                        const numAnterior = sorteios[idx-1][0];
+                        const numAnterior = sorteiosInvertidos[idx-1][0];
                         const numAtual = sorteio[0];
                         
                         if (numAnterior && numAtual && numAnterior.length === 4 && numAtual.length === 4) {
@@ -933,13 +941,39 @@
                     });
                 });
                 
-                const ultimoSorteioIdx = sorteios.length - 1;
+                // Calcular atrasos (agora com índices corretos)
+                // O primeiro na lista invertida (índice 0) é o mais recente
                 for (const [num, ultimaVez] of Object.entries(historico.agregados.ultimaAparicao)) {
-                    const atraso = ultimoSorteioIdx - ultimaVez;
-                    historico.agregados.ciclosDetectados[num] = atraso;
+                    historico.agregados.ciclosDetectados[num] = ultimaVez; // 0 = saiu no último sorteio
                 }
                 
                 return historico;
+            }
+            
+            // ==================== FUNÇÃO APRENDER COM ACERTOS CORRIGIDA ====================
+            function aprenderComAcertos(historico) {
+                const acertosAnteriores = {};
+                
+                // Agora o índice 0 é o mais recente, índice 1 é o anterior, etc.
+                for (let i = 1; i < historico.analises.length; i++) {
+                    const numAnterior = historico.analises[i].numeros[0]; // Sorteio anterior
+                    const numAtual = historico.analises[i-1].numeros[0]; // Sorteio atual (mais recente)
+                    
+                    if (!numAnterior || !numAtual || numAnterior.length !== 4) continue;
+                    
+                    const possibilidades = new Set([
+                        numAnterior.substring(1,4) + numAnterior.substring(0,1),
+                        numAnterior.substring(3,4) + numAnterior.substring(0,3),
+                        numAnterior.substring(2,4) + numAnterior.substring(0,2)
+                    ]);
+                    
+                    if (possibilidades.has(numAtual)) {
+                        const chave = `${numAnterior}->${numAtual}`;
+                        acertosAnteriores[chave] = (acertosAnteriores[chave] || 0) + 1;
+                    }
+                }
+                
+                return acertosAnteriores;
             }
             
             function calcularPesosPorTurno(historico, turno) {
@@ -965,41 +999,19 @@
                 };
             }
             
-            function aprenderComAcertos(historico) {
-                const acertosAnteriores = {};
-                
-                for (let i = 2; i < historico.analises.length; i++) {
-                    const numAnterior = historico.analises[i-1].numeros[0];
-                    const numAtual = historico.analises[i].numeros[0];
-                    
-                    if (!numAnterior || !numAtual || numAnterior.length !== 4) continue;
-                    
-                    const possibilidades = new Set([
-                        numAnterior.substring(1,4) + numAnterior.substring(0,1),
-                        numAnterior.substring(3,4) + numAnterior.substring(0,3),
-                        numAnterior.substring(2,4) + numAnterior.substring(0,2)
-                    ]);
-                    
-                    if (possibilidades.has(numAtual)) {
-                        const chave = `${numAnterior}->${numAtual}`;
-                        acertosAnteriores[chave] = (acertosAnteriores[chave] || 0) + 1;
-                    }
-                }
-                
-                return acertosAnteriores;
-            }
-            
+            // ==================== FUNÇÃO PREVER DESLOCAMENTO CORRIGIDA ====================
             function preverDeslocamentoCircular(turno) {
                 const historico = analisarHistoricoTurno(turno);
                 if (!historico || historico.totalSorteios < 2) return [];
                 
                 const acertosAnteriores = aprenderComAcertos(historico);
                 const pesos = calcularPesosPorTurno(historico, turno);
-                const ultimosSorteios = historico.analises.slice(-3);
+                // Agora pega os primeiros da lista (mais recentes)
+                const ultimosSorteios = historico.analises.slice(0, 3);
                 const previsoes = new Map();
                 
                 ultimosSorteios.forEach((sorteio, idx) => {
-                    const atraso = ultimosSorteios.length - idx;
+                    const atraso = idx + 1; // 1 = mais recente, 2 = segundo mais recente, etc.
                     const pesoAtraso = atraso === 1 ? 1.0 : atraso === 2 ? 0.6 : 0.3;
                     
                     if (!sorteio || !sorteio.numeros || sorteio.numeros.length === 0) return;
@@ -1032,7 +1044,7 @@
                             
                             const ultimaVez = historico.agregados.ultimaAparicao[desc.valor];
                             if (ultimaVez !== undefined) {
-                                const atrasoNum = historico.totalSorteios - 1 - ultimaVez;
+                                const atrasoNum = ultimaVez; // Agora é direto (0 = mais recente)
                                 if (atrasoNum >= 7 && atrasoNum <= 14) score += 25;
                                 else if (atrasoNum > 14) score += 10;
                             } else {
@@ -1045,8 +1057,9 @@
                     });
                 });
                 
+                // Usar o mais recente para variações
                 if (ultimosSorteios.length > 0) {
-                    const ultimo = ultimosSorteios[ultimosSorteios.length - 1];
+                    const ultimo = ultimosSorteios[0]; // Primeiro = mais recente
                     if (ultimo && ultimo.numeros[0]) {
                         const num = ultimo.numeros[0];
                         if (num.length === 4) {
@@ -1082,7 +1095,7 @@
                     alertas: []
                 };
                 
-                const ultimos5Sorteios = historico.analises.slice(-5);
+                const ultimos5Sorteios = historico.analises.slice(0, 5); // Agora pega os primeiros (mais recentes)
                 const frequencia = historico.agregados;
                 
                 const estrategias = { ESPELHAMENTO:0, CASAMENTO:0, FORMATO_ESPECIAL:0, SEQUENCIA:0, FINAL_DOMINANTE:0 };
@@ -1107,7 +1120,7 @@
                 }
                 
                 const prefixosUltimos10 = {};
-                historico.analises.slice(-10).forEach(analise => {
+                historico.analises.slice(0, 10).forEach(analise => {
                     analise.prefixos.forEach(p => {
                         prefixosUltimos10[p] = (prefixosUltimos10[p] || 0) + 1;
                     });
@@ -1119,7 +1132,7 @@
                     .map(p => p[0]);
                 
                 const finaisUltimos10 = {};
-                historico.analises.slice(-10).forEach(analise => {
+                historico.analises.slice(0, 10).forEach(analise => {
                     analise.finais.forEach(f => {
                         finaisUltimos10[f] = (finaisUltimos10[f] || 0) + 1;
                     });
@@ -1150,15 +1163,12 @@
                 
                 const finaisAtrasados = Object.entries(frequencia.finaisFrequencia)
                     .filter(([final, freq]) => {
-                        const ultimoIdx = historico.analises.slice().reverse()
-                            .findIndex(a => a.finais.includes(final));
+                        const ultimoIdx = historico.analises.findIndex(a => a.finais.includes(final));
                         return ultimoIdx > 5;
                     })
                     .sort((a, b) => {
-                        const atrasoA = historico.analises.slice().reverse()
-                            .findIndex(ana => ana.finais.includes(a[0]));
-                        const atrasoB = historico.analises.slice().reverse()
-                            .findIndex(ana => ana.finais.includes(b[0]));
+                        const atrasoA = historico.analises.findIndex(ana => ana.finais.includes(a[0]));
+                        const atrasoB = historico.analises.findIndex(ana => ana.finais.includes(b[0]));
                         return atrasoB - atrasoA;
                     })
                     .slice(0, 10);
@@ -1185,7 +1195,7 @@
                 sugestoes.milharesFortes = sugestoes.milharesFortes.slice(0, 10);
                 
                 const dezenasRecentes = [];
-                historico.analises.slice(-10).forEach(analise => {
+                historico.analises.slice(0, 10).forEach(analise => {
                     analise.finais.forEach(final => dezenasRecentes.push(final));
                 });
                 const frequenciaDezenas = {};
@@ -1197,8 +1207,7 @@
                 
                 const prefixosAtrasados = Object.entries(historico.agregados.prefixosFrequencia)
                     .filter(([p, freq]) => {
-                        const ultimoIdx = historico.analises.slice().reverse()
-                            .findIndex(a => a.prefixos.includes(p));
+                        const ultimoIdx = historico.analises.findIndex(a => a.prefixos.includes(p));
                         return ultimoIdx > 8;
                     })
                     .slice(0, 5)
@@ -1233,12 +1242,6 @@
                 if (!historico) return null;
 
                 const frequenciaCentenas = historico.agregados.centenasFrequencia;
-                const ultimoIndice = historico.totalSorteios - 1;
-
-                const atrasoCentenas = {};
-                for (const [cent, ultimo] of Object.entries(historico.agregados.ultimaAparicaoCentena)) {
-                    atrasoCentenas[cent] = ultimoIndice - ultimo;
-                }
 
                 const quentes = Object.entries(frequenciaCentenas)
                     .sort((a, b) => b[1] - a[1])
@@ -1262,7 +1265,7 @@
 
                 const probabilisticas = Object.entries(frequenciaCentenas)
                     .map(([cent, freq]) => {
-                        const atraso = atrasoCentenas[cent] || 0;
+                        const atraso = historico.agregados.ultimaAparicaoCentena[cent] || 0;
                         const score = (freq * 2) + (atraso * 3);
                         return { cent, score };
                     })
@@ -1273,17 +1276,303 @@
                 return { quentes, frias, probabilisticas };
             }
             
-            // ===== NOVA FUNÇÃO: Analisa último sorteio + gera valores baseados em padrões =====
+            // ===== NOVAS FUNÇÕES DE PREVISÃO COM ML =====
+            
+            // Função 1: Previsão com Machine Learning Simples (CORRIGIDA)
+            function preverProximosNumerosComML(turno) {
+                const historico = analisarHistoricoTurno(turno);
+                if (!historico || historico.totalSorteios < 10) return [];
+                
+                const scores = new Map();
+                
+                // Pega todos os números que já apareceram
+                const todosNumeros = new Set();
+                historico.analises.forEach(analise => {
+                    analise.numeros.forEach(num => todosNumeros.add(num));
+                });
+                
+                // Se tiver menos de 100 números únicos, adiciona números comuns
+                if (todosNumeros.size < 100) {
+                    for (let i = 0; i <= 999; i++) {
+                        todosNumeros.add(i.toString().padStart(4, '0'));
+                    }
+                }
+                
+                // Calcula scores baseados em múltiplos fatores
+                todosNumeros.forEach(numero => {
+                    let score = 0;
+                    
+                    // Fator 1: Frequência histórica (peso 1)
+                    const frequencia = historico.agregados.numerosFrequencia[numero] || 0;
+                    score += frequencia * 10;
+                    
+                    // Fator 2: Atraso (peso 3 - mais importante) - CORRIGIDO
+                    const ultimaVez = historico.agregados.ultimaAparicao[numero];
+                    if (ultimaVez !== undefined) {
+                        const atraso = ultimaVez; // Agora 0 = mais recente, quanto maior, mais atrasado
+                        score += atraso * 30;
+                    } else {
+                        score += 500; // Nunca saiu - prioridade média
+                    }
+                    
+                    // Fator 3: Padrões especiais
+                    const padroes = detectarPadroesNumero(numero);
+                    if (padroes.includes('ESPELHADO_ABBA') || padroes.includes('ESPELHADO_ABA')) {
+                        score += 50;
+                    }
+                    if (padroes.includes('FORMATO_AABB') || padroes.includes('FORMATO_ABAB')) {
+                        score += 30;
+                    }
+                    if (padroes.includes('SEQUENCIA_CRESCENTE') || padroes.includes('SEQUENCIA_DECRESCENTE')) {
+                        score += 40;
+                    }
+                    
+                    // Fator 4: Tendência de deslocamento nos últimos sorteios
+                    const ultimosSorteios = historico.analises.slice(0, 5);
+                    const ultimoNumero = ultimosSorteios[0]?.numeros[0];
+                    if (ultimoNumero) {
+                        const deslocamentos = [
+                            ultimoNumero.substring(1,4) + ultimoNumero.substring(0,1),
+                            ultimoNumero.substring(3,4) + ultimoNumero.substring(0,3),
+                            ultimoNumero.substring(2,4) + ultimoNumero.substring(0,2)
+                        ];
+                        if (deslocamentos.includes(numero)) {
+                            score += 80;
+                        }
+                    }
+                    
+                    // Fator 5: Repetição de padrões recentes
+                    historico.analises.slice(0, 5).forEach(sorteio => {
+                        sorteio.numeros.forEach(num => {
+                            if (numero.endsWith(num.substring(2,4))) {
+                                score += 5; // Mesmo final
+                            }
+                            if (numero.startsWith(num.substring(0,2))) {
+                                score += 5; // Mesmo prefixo
+                            }
+                            if (detectarPadroesNumero(numero).some(p => 
+                                detectarPadroesNumero(num).includes(p) && p.includes('SOMA'))) {
+                                score += 10; // Mesma soma
+                            }
+                        });
+                    });
+                    
+                    scores.set(numero, score);
+                });
+                
+                // Ordena e retorna os top 20
+                return Array.from(scores.entries())
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 20)
+                    .map(item => item[0]);
+            }
+            
+            // Função 2: Previsão por Padrão Temporal (CORRIGIDA)
+            function preverPorPadraoTemporal(turno) {
+                const historico = analisarHistoricoTurno(turno);
+                if (!historico || historico.totalSorteios < 15) return [];
+                
+                const scores = new Map();
+                const ultimos15 = historico.analises.slice(0, 15);
+                
+                // Analisa ciclos de repetição
+                for (let i = 0; i < ultimos15.length - 1; i++) {
+                    const sorteioAtual = ultimos15[i];
+                    const proximoSorteio = ultimos15[i + 1];
+                    
+                    sorteioAtual.numeros.forEach(numAtual => {
+                        proximoSorteio.numeros.forEach(numProx => {
+                            // Se houve deslocamento
+                            if (numProx === (numAtual.substring(1,4) + numAtual.substring(0,1)) ||
+                                numProx === (numAtual.substring(3,4) + numAtual.substring(0,3)) ||
+                                numProx === (numAtual.substring(2,4) + numAtual.substring(0,2))) {
+                                
+                                const chave = `${numAtual}->${numProx}`;
+                                scores.set(chave, (scores.get(chave) || 0) + 1);
+                            }
+                            
+                            // Se repetiu o número
+                            if (numProx === numAtual) {
+                                scores.set(numProx, (scores.get(numProx) || 0) + 3);
+                            }
+                            
+                            // Se tem mesmo final
+                            if (numProx.substring(2,4) === numAtual.substring(2,4)) {
+                                scores.set(numProx, (scores.get(numProx) || 0) + 1);
+                            }
+                            
+                            // Se tem mesmo prefixo
+                            if (numProx.substring(0,2) === numAtual.substring(0,2)) {
+                                scores.set(numProx, (scores.get(numProx) || 0) + 1);
+                            }
+                        });
+                    });
+                }
+                
+                // Aplica ao último sorteio
+                const ultimoSorteio = ultimos15[0];
+                const previsoes = new Set();
+                
+                ultimoSorteio.numeros.forEach(num => {
+                    // Gera deslocamentos
+                    const deslocamentos = [
+                        num.substring(1,4) + num.substring(0,1),
+                        num.substring(3,4) + num.substring(0,3),
+                        num.substring(2,4) + num.substring(0,2)
+                    ];
+                    
+                    deslocamentos.forEach(desc => {
+                        const peso = scores.get(`${num}->${desc}`) || 0;
+                        if (peso > 0) {
+                            for (let i = 0; i < peso; i++) previsoes.add(desc);
+                        } else {
+                            previsoes.add(desc);
+                        }
+                    });
+                    
+                    // Adiciona variações do número
+                    const prefixo = num.substring(0,2);
+                    const final = num.substring(2,4);
+                    for (let i = 0; i <= 9; i++) {
+                        previsoes.add(prefixo + i.toString().padStart(2, '0'));
+                        previsoes.add(i.toString().padStart(2, '0') + final);
+                    }
+                    
+                    // Adiciona números com mesmo padrão
+                    const padroes = detectarPadroesNumero(num);
+                    historico.analises.forEach(analise => {
+                        analise.numeros.forEach(n => {
+                            const p = detectarPadroesNumero(n);
+                            if (padroes.some(pad => p.includes(pad))) {
+                                previsoes.add(n);
+                            }
+                        });
+                    });
+                });
+                
+                return Array.from(previsoes).slice(0, 20);
+            }
+            
+            // Função 3: Previsão por Análise de Dígitos (melhorada)
+            function preverPorDigitoMelhorado(turno) {
+                const historico = analisarHistoricoTurno(turno);
+                if (!historico || historico.totalSorteios < 5) return [];
+                
+                // Analisa frequência por posição nos últimos 20 sorteios
+                const frequenciaPos = {
+                    0: {}, 1: {}, 2: {}, 3: {}
+                };
+                
+                const ultimos20 = historico.analises.slice(0, 20);
+                ultimos20.forEach(analise => {
+                    analise.numeros.forEach(num => {
+                        if (num.length === 4) {
+                            for (let pos = 0; pos < 4; pos++) {
+                                const digito = num[pos];
+                                frequenciaPos[pos][digito] = (frequenciaPos[pos][digito] || 0) + 1;
+                            }
+                        }
+                    });
+                });
+                
+                // Calcula dígitos mais prováveis por posição
+                const digitosProvaveis = {};
+                for (let pos = 0; pos < 4; pos++) {
+                    digitosProvaveis[pos] = Object.entries(frequenciaPos[pos])
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 4)
+                        .map(item => item[0]);
+                }
+                
+                // Gera combinações
+                const previsoes = new Set();
+                
+                for (let a of digitosProvaveis[0]) {
+                    for (let b of digitosProvaveis[1]) {
+                        for (let c of digitosProvaveis[2]) {
+                            for (let d of digitosProvaveis[3]) {
+                                previsoes.add(a + b + c + d);
+                            }
+                        }
+                    }
+                }
+                
+                return Array.from(previsoes).slice(0, 20);
+            }
+            
+            // Função 4: Função principal de previsão combinada
+            function gerarPrevisoesCompletas(turno) {
+                const historico = analisarHistoricoTurno(turno);
+                if (!historico) return [];
+                
+                console.log(`Gerando previsões para ${turno} com ${historico.totalSorteios} sorteios`);
+                
+                // 1. Previsão ML
+                const mlPrevisoes = preverProximosNumerosComML(turno);
+                
+                // 2. Previsão Temporal
+                const temporalPrevisoes = preverPorPadraoTemporal(turno);
+                
+                // 3. Previsão por Dígito
+                const digitoPrevisoes = preverPorDigitoMelhorado(turno);
+                
+                // 4. Previsão por Deslocamento (existente)
+                const deslocamentoPrevisoes = preverDeslocamentoCircular(turno);
+                
+                // 5. Combina e pontua todas as previsões
+                const scores = new Map();
+                
+                const adicionarComPeso = (lista, peso) => {
+                    lista.forEach((num, idx) => {
+                        const scoreAtual = scores.get(num) || 0;
+                        // Posição na lista também influencia
+                        const posBonus = Math.max(0, 20 - idx);
+                        scores.set(num, scoreAtual + peso + posBonus);
+                    });
+                };
+                
+                adicionarComPeso(mlPrevisoes, 100);
+                adicionarComPeso(temporalPrevisoes, 80);
+                adicionarComPeso(digitoPrevisoes, 60);
+                adicionarComPeso(deslocamentoPrevisoes, 70);
+                
+                // 6. Adiciona números quentes
+                const quentes = Object.entries(historico.agregados.numerosFrequencia)
+                    .sort((a,b) => b[1] - a[1])
+                    .slice(0, 15)
+                    .map(n => n[0]);
+                adicionarComPeso(quentes, 40);
+                
+                // 7. Adiciona números atrasados (CORRIGIDO)
+                const atrasados = Object.entries(historico.agregados.ciclosDetectados)
+                    .sort((a,b) => b[1] - a[1])
+                    .slice(0, 15)
+                    .map(n => n[0]);
+                adicionarComPeso(atrasados, 90); // Peso alto para atrasados
+                
+                // 8. Adiciona números que nunca saíram
+                const todosNumerosPossiveis = Array.from({ length: 10000 }, (_, i) => i.toString().padStart(4, '0'));
+                const numerosNuncaVistos = todosNumerosPossiveis.filter(n => !historico.agregados.numerosFrequencia[n]);
+                adicionarComPeso(numerosNuncaVistos.slice(0, 20), 50);
+                
+                // Ordena por score e retorna top 20
+                return Array.from(scores.entries())
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 20)
+                    .map(item => item[0]);
+            }
+            
+            // ===== FUNÇÃO DE ANÁLISE DO ÚLTIMO SORTEIO (CORRIGIDA) =====
             function analisarUltimoSorteioEProjetar(turno) {
                 const historico = analisarHistoricoTurno(turno);
                 if (!historico || historico.totalSorteios < 3) return null;
                 
-                // Pega os últimos 3 sorteios
-                const ultimos3 = historico.analises.slice(-3);
-                const ultimo = ultimos3[ultimos3.length - 1];
-                const penultimo = ultimos3[ultimos3.length - 2];
+                // Pega os últimos 3 sorteios (primeiros da lista)
+                const ultimos3 = historico.analises.slice(0, 3);
+                const ultimo = ultimos3[0]; // Mais recente
+                const penultimo = ultimos3[1]; // Segundo mais recente
                 
-                // Pega os 5 primeiros prêmios do último sorteio (os mais importantes)
+                // Pega os 5 primeiros prêmios do último sorteio
                 const numerosUltimo = ultimo.numeros.slice(0, 5);
                 
                 // Analisa os padrões presentes no último sorteio
@@ -1459,474 +1748,17 @@
                     projecoes: projecoesUnicas.slice(0, 10)
                 };
             }
-            
-            // ===== NOVAS FUNÇÕES PARA ANÁLISE POR CASA DECIMAL =====
-            
-            // Função 1: Analisa frequência por posição decimal
-            function analisarFrequenciaPorPosicao(historico, turno) {
-                const frequencias = {
-                    milhar: {},
-                    centena: {},
-                    dezena: {},
-                    unidade: {}
-                };
-                
-                // Inicializa com todos os dígitos possíveis (0-9)
-                for (let i = 0; i <= 9; i++) {
-                    frequencias.milhar[i] = 0;
-                    frequencias.centena[i] = 0;
-                    frequencias.dezena[i] = 0;
-                    frequencias.unidade[i] = 0;
-                }
-                
-                // Conta frequência de cada dígito em cada posição
-                historico.analises.forEach(analise => {
-                    analise.numeros.forEach(num => {
-                        if (num.length === 4) {
-                            const digitos = num.split('');
-                            frequencias.milhar[digitos[0]]++;
-                            frequencias.centena[digitos[1]]++;
-                            frequencias.dezena[digitos[2]]++;
-                            frequencias.unidade[digitos[3]]++;
-                        }
-                    });
-                });
-                
-                return frequencias;
-            }
-            
-            // Função 2: Analisa dígitos por padrão específico
-            function analisarDigitosPorPadrao(historico, turno) {
-                const dados = {
-                    deslocamentoEsquerda: { milhar: {}, centena: {}, dezena: {}, unidade: {} },
-                    deslocamentoDireita: { milhar: {}, centena: {}, dezena: {}, unidade: {} },
-                    deslocamentoDuplo: { milhar: {}, centena: {}, dezena: {}, unidade: {} },
-                    espelhadoABBA: { milhar: {}, centena: {}, dezena: {}, unidade: {} },
-                    espelhadoABA: { milhar: {}, centena: {}, dezena: {}, unidade: {} },
-                    formatoAABB: { milhar: {}, centena: {}, dezena: {}, unidade: {} },
-                    formatoABAB: { milhar: {}, centena: {}, dezena: {}, unidade: {} },
-                    familiaDezenas: { milhar: {}, centena: {}, dezena: {}, unidade: {} },
-                    familiaPrefixos: { milhar: {}, centena: {}, dezena: {}, unidade: {} }
-                };
-                
-                // Inicializa contadores
-                [0,1,2,3,4,5,6,7,8,9].forEach(d => {
-                    Object.values(dados).forEach(categoria => {
-                        categoria.milhar[d] = 0;
-                        categoria.centena[d] = 0;
-                        categoria.dezena[d] = 0;
-                        categoria.unidade[d] = 0;
-                    });
-                });
-                
-                // Analisa cada sorteio e identifica padrões
-                historico.analises.forEach((analise, idx) => {
-                    if (idx > 0) {
-                        const anterior = historico.analises[idx-1].numeros[0];
-                        const atual = analise.numeros[0];
-                        
-                        if (anterior && atual && anterior.length === 4 && atual.length === 4) {
-                            const digAtual = atual.split('');
-                            
-                            // Deslocamento esquerda (ABCD → BCDA)
-                            if (atual === (anterior.substring(1,4) + anterior.substring(0,1))) {
-                                for (let pos = 0; pos < 4; pos++) {
-                                    const categoria = dados.deslocamentoEsquerda;
-                                    const digito = digAtual[pos];
-                                    if (pos === 0) categoria.milhar[digito]++;
-                                    else if (pos === 1) categoria.centena[digito]++;
-                                    else if (pos === 2) categoria.dezena[digito]++;
-                                    else if (pos === 3) categoria.unidade[digito]++;
-                                }
-                            }
-                            
-                            // Deslocamento direita (ABCD → DABC)
-                            if (atual === (anterior.substring(3,4) + anterior.substring(0,3))) {
-                                for (let pos = 0; pos < 4; pos++) {
-                                    const categoria = dados.deslocamentoDireita;
-                                    const digito = digAtual[pos];
-                                    if (pos === 0) categoria.milhar[digito]++;
-                                    else if (pos === 1) categoria.centena[digito]++;
-                                    else if (pos === 2) categoria.dezena[digito]++;
-                                    else if (pos === 3) categoria.unidade[digito]++;
-                                }
-                            }
-                            
-                            // Deslocamento duplo (ABCD → CDAB)
-                            if (atual === (anterior.substring(2,4) + anterior.substring(0,2))) {
-                                for (let pos = 0; pos < 4; pos++) {
-                                    const categoria = dados.deslocamentoDuplo;
-                                    const digito = digAtual[pos];
-                                    if (pos === 0) categoria.milhar[digito]++;
-                                    else if (pos === 1) categoria.centena[digito]++;
-                                    else if (pos === 2) categoria.dezena[digito]++;
-                                    else if (pos === 3) categoria.unidade[digito]++;
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Espelhados ABBA (ex: 5115)
-                    analise.espelhamentos.forEach(num => {
-                        if (detectarPadroesNumero(num).includes('ESPELHADO_ABBA')) {
-                            const dig = num.split('');
-                            for (let pos = 0; pos < 4; pos++) {
-                                const categoria = dados.espelhadoABBA;
-                                const digito = dig[pos];
-                                if (pos === 0) categoria.milhar[digito]++;
-                                else if (pos === 1) categoria.centena[digito]++;
-                                else if (pos === 2) categoria.dezena[digito]++;
-                                else if (pos === 3) categoria.unidade[digito]++;
-                            }
-                        }
-                    });
-                    
-                    // Espelhados ABA (ex: 5152)
-                    analise.espelhamentos.forEach(num => {
-                        if (detectarPadroesNumero(num).includes('ESPELHADO_ABA')) {
-                            const dig = num.split('');
-                            for (let pos = 0; pos < 4; pos++) {
-                                const categoria = dados.espelhadoABA;
-                                const digito = dig[pos];
-                                if (pos === 0) categoria.milhar[digito]++;
-                                else if (pos === 1) categoria.centena[digito]++;
-                                else if (pos === 2) categoria.dezena[digito]++;
-                                else if (pos === 3) categoria.unidade[digito]++;
-                            }
-                        }
-                    });
-                    
-                    // Formato AABB (ex: 1122)
-                    analise.formatosEspeciais.forEach(num => {
-                        if (detectarPadroesNumero(num).includes('FORMATO_AABB')) {
-                            const dig = num.split('');
-                            for (let pos = 0; pos < 4; pos++) {
-                                const categoria = dados.formatoAABB;
-                                const digito = dig[pos];
-                                if (pos === 0) categoria.milhar[digito]++;
-                                else if (pos === 1) categoria.centena[digito]++;
-                                else if (pos === 2) categoria.dezena[digito]++;
-                                else if (pos === 3) categoria.unidade[digito]++;
-                            }
-                        }
-                    });
-                    
-                    // Formato ABAB (ex: 1212)
-                    analise.formatosEspeciais.forEach(num => {
-                        if (detectarPadroesNumero(num).includes('FORMATO_ABAB')) {
-                            const dig = num.split('');
-                            for (let pos = 0; pos < 4; pos++) {
-                                const categoria = dados.formatoABAB;
-                                const digito = dig[pos];
-                                if (pos === 0) categoria.milhar[digito]++;
-                                else if (pos === 1) categoria.centena[digito]++;
-                                else if (pos === 2) categoria.dezena[digito]++;
-                                else if (pos === 3) categoria.unidade[digito]++;
-                            }
-                        }
-                    });
-                    
-                    // Famílias de dezenas (quando uma dezena se repete)
-                    const dezenasCount = {};
-                    analise.numeros.forEach(num => {
-                        const dezena = num.substring(2,4);
-                        dezenasCount[dezena] = (dezenasCount[dezena] || 0) + 1;
-                    });
-                    
-                    Object.entries(dezenasCount).forEach(([dezena, count]) => {
-                        if (count >= 2) {
-                            analise.numeros.forEach(num => {
-                                if (num.endsWith(dezena)) {
-                                    const dig = num.split('');
-                                    for (let pos = 0; pos < 4; pos++) {
-                                        const categoria = dados.familiaDezenas;
-                                        const digito = dig[pos];
-                                        if (pos === 0) categoria.milhar[digito]++;
-                                        else if (pos === 1) categoria.centena[digito]++;
-                                        else if (pos === 2) categoria.dezena[digito]++;
-                                        else if (pos === 3) categoria.unidade[digito]++;
-                                    }
-                                }
-                            });
-                        }
-                    });
-                    
-                    // Famílias de prefixos
-                    const prefixosCount = {};
-                    analise.numeros.forEach(num => {
-                        const prefixo = num.substring(0,2);
-                        prefixosCount[prefixo] = (prefixosCount[prefixo] || 0) + 1;
-                    });
-                    
-                    Object.entries(prefixosCount).forEach(([prefixo, count]) => {
-                        if (count >= 2) {
-                            analise.numeros.forEach(num => {
-                                if (num.startsWith(prefixo)) {
-                                    const dig = num.split('');
-                                    for (let pos = 0; pos < 4; pos++) {
-                                        const categoria = dados.familiaPrefixos;
-                                        const digito = dig[pos];
-                                        if (pos === 0) categoria.milhar[digito]++;
-                                        else if (pos === 1) categoria.centena[digito]++;
-                                        else if (pos === 2) categoria.dezena[digito]++;
-                                        else if (pos === 3) categoria.unidade[digito]++;
-                                    }
-                                }
-                            });
-                        }
-                    });
-                });
-                
-                return dados;
-            }
-            
-            // Função 3: Obtém dígitos mais prováveis por posição para cada padrão
-            function obterDigitosProvaveisPorPadrao(dadosPorPadrao, frequenciasGerais, turno) {
-                const resultado = {};
-                
-                // Pesos específicos por turno
-                const pesosTurno = {
-                    'Manhã': { milhar: 1.2, centena: 1.0, dezena: 0.9, unidade: 0.9 },
-                    'Tarde': { milhar: 1.0, centena: 1.1, dezena: 1.0, unidade: 1.0 },
-                    'Tarde II': { milhar: 1.1, centena: 1.0, dezena: 1.2, unidade: 0.8 },
-                    'Noite': { milhar: 0.9, centena: 1.0, dezena: 1.0, unidade: 1.1 }
-                };
-                
-                const pesos = pesosTurno[turno] || pesosTurno['Manhã'];
-                
-                Object.entries(dadosPorPadrao).forEach(([nomePadrao, categorias]) => {
-                    resultado[nomePadrao] = {
-                        milhar: [],
-                        centena: [],
-                        dezena: [],
-                        unidade: []
-                    };
-                    
-                    // Para cada posição, calcula os dígitos mais prováveis
-                    ['milhar', 'centena', 'dezena', 'unidade'].forEach(pos => {
-                        const scores = [];
-                        
-                        for (let digito = 0; digito <= 9; digito++) {
-                            // Score do padrão específico
-                            const scorePadrao = categorias[pos][digito] || 0;
-                            
-                            // Score geral (frequência histórica)
-                            const scoreGeral = frequenciasGerais[pos][digito] || 0;
-                            
-                            // Peso da posição no turno
-                            const pesoPos = pesos[pos];
-                            
-                            // Score combinado
-                            const scoreTotal = (scorePadrao * 3) + (scoreGeral * 1) * pesoPos;
-                            
-                            scores.push({ digito: digito.toString(), score: scoreTotal });
-                        }
-                        
-                        // Pega os 3 dígitos com maior score
-                        resultado[nomePadrao][pos] = scores
-                            .sort((a, b) => b.score - a.score)
-                            .slice(0, 3)
-                            .map(item => item.digito);
-                    });
-                });
-                
-                return resultado;
-            }
-            
-            // Função 4: Identifica padrões nos últimos 3 sorteios
-            function identificarPadroesRecentes(historico) {
-                const ultimos3 = historico.analises.slice(-3);
-                const padroesRecentes = {
-                    deslocamentos: [],
-                    espelhados: [],
-                    formatosEspeciais: [],
-                    familiasDezenas: [],
-                    familiasPrefixos: []
-                };
-                
-                // Analisa cada sorteio recente
-                ultimos3.forEach((analise, idx) => {
-                    // Deslocamentos em relação ao anterior
-                    if (idx > 0) {
-                        const anterior = ultimos3[idx-1].numeros[0];
-                        const atual = analise.numeros[0];
-                        
-                        if (anterior && atual && anterior.length === 4 && atual.length === 4) {
-                            if (atual === (anterior.substring(1,4) + anterior.substring(0,1))) {
-                                padroesRecentes.deslocamentos.push({
-                                    tipo: 'esquerda',
-                                    origem: anterior,
-                                    destino: atual
-                                });
-                            }
-                            if (atual === (anterior.substring(3,4) + anterior.substring(0,3))) {
-                                padroesRecentes.deslocamentos.push({
-                                    tipo: 'direita',
-                                    origem: anterior,
-                                    destino: atual
-                                });
-                            }
-                            if (atual === (anterior.substring(2,4) + anterior.substring(0,2))) {
-                                padroesRecentes.deslocamentos.push({
-                                    tipo: 'duplo',
-                                    origem: anterior,
-                                    destino: atual
-                                });
-                            }
-                        }
-                    }
-                    
-                    // Espelhados
-                    if (analise.espelhamentos.length > 0) {
-                        padroesRecentes.espelhados.push(...analise.espelhamentos);
-                    }
-                    
-                    // Formatos especiais
-                    if (analise.formatosEspeciais.length > 0) {
-                        padroesRecentes.formatosEspeciais.push(...analise.formatosEspeciais);
-                    }
-                    
-                    // Famílias de dezenas
-                    const dezenasCount = {};
-                    analise.numeros.forEach(num => {
-                        const dezena = num.substring(2,4);
-                        dezenasCount[dezena] = (dezenasCount[dezena] || 0) + 1;
-                    });
-                    Object.entries(dezenasCount).forEach(([dezena, count]) => {
-                        if (count >= 2) {
-                            padroesRecentes.familiasDezenas.push(dezena);
-                        }
-                    });
-                    
-                    // Famílias de prefixos
-                    const prefixosCount = {};
-                    analise.numeros.forEach(num => {
-                        const prefixo = num.substring(0,2);
-                        prefixosCount[prefixo] = (prefixosCount[prefixo] || 0) + 1;
-                    });
-                    Object.entries(prefixosCount).forEach(([prefixo, count]) => {
-                        if (count >= 2) {
-                            padroesRecentes.familiasPrefixos.push(prefixo);
-                        }
-                    });
-                });
-                
-                return padroesRecentes;
-            }
-            
-            // Função 5: Calcula score de um número baseado nos dígitos prováveis
-            function calcularScoreNumero(numero, digitosProvaveis, turno) {
-                const dig = numero.split('');
-                let score = 0;
-                
-                // Pesos por posição
-                const pesosPos = {
-                    'Manhã': [1.2, 1.0, 0.9, 0.9],
-                    'Tarde': [1.0, 1.1, 1.0, 1.0],
-                    'Tarde II': [1.1, 1.0, 1.2, 0.8],
-                    'Noite': [0.9, 1.0, 1.0, 1.1]
-                };
-                
-                const pesos = pesosPos[turno] || pesosPos['Manhã'];
-                
-                // Verifica cada dígito
-                for (let i = 0; i < 4; i++) {
-                    const pos = i === 0 ? 'milhar' : i === 1 ? 'centena' : i === 2 ? 'dezena' : 'unidade';
-                    const digito = dig[i];
-                    
-                    if (digitosProvaveis[pos] && digitosProvaveis[pos].includes(digito)) {
-                        score += 10 * pesos[i];
-                    }
-                }
-                
-                return score;
-            }
-            
-            // Função 6: Gera números baseados em dígitos prováveis por padrão
-            function gerarNumerosPorPadrao(digitosProvaveis, padroesRecentes, turno) {
-                const numerosGerados = [];
-                const vistos = new Set();
-                
-                // Para cada padrão identificado nos últimos sorteios
-                Object.entries(padroesRecentes).forEach(([tipoPadrao, ocorrencias]) => {
-                    if (ocorrencias.length === 0) return;
-                    
-                    // Mapeia o tipo de padrão para a categoria em digitosProvaveis
-                    const mapaPadrao = {
-                        'deslocamentos': 'deslocamentoEsquerda',
-                        'espelhados': 'espelhadoABBA',
-                        'formatosEspeciais': 'formatoAABB',
-                        'familiasDezenas': 'familiaDezenas',
-                        'familiasPrefixos': 'familiaPrefixos'
-                    };
-                    
-                    const categoriaBase = mapaPadrao[tipoPadrao];
-                    if (!categoriaBase) return;
-                    
-                    // Tenta diferentes variações do padrão
-                    const variacoes = [
-                        categoriaBase,
-                        categoriaBase === 'deslocamentoEsquerda' ? 'deslocamentoDireita' : null,
-                        categoriaBase === 'deslocamentoEsquerda' ? 'deslocamentoDuplo' : null,
-                        categoriaBase === 'espelhadoABBA' ? 'espelhadoABA' : null,
-                        categoriaBase === 'formatoAABB' ? 'formatoABAB' : null
-                    ].filter(v => v && digitosProvaveis[v]);
-                    
-                    variacoes.forEach(categoria => {
-                        const digitos = digitosProvaveis[categoria];
-                        if (!digitos) return;
-                        
-                        // Gera combinações dos dígitos mais prováveis
-                        for (let m of digitos.milhar) {
-                            for (let c of digitos.centena) {
-                                for (let d of digitos.dezena) {
-                                    for (let u of digitos.unidade) {
-                                        const numero = m + c + d + u;
-                                        if (!vistos.has(numero)) {
-                                            vistos.add(numero);
-                                            numerosGerados.push({
-                                                numero: numero,
-                                                padrao: categoria,
-                                                score: calcularScoreNumero(numero, digitos, turno)
-                                            });
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                });
-                
-                // Ordena por score e retorna top 10
-                return numerosGerados
-                    .sort((a, b) => b.score - a.score)
-                    .slice(0, 10)
-                    .map(item => item.numero);
-            }
-            
-            // Função 7: Função principal de previsão por casa decimal
-            function preverComAnalisePorDigito(turno) {
+
+            // ==================== FUNÇÃO DE DEPURAÇÃO ====================
+            function debugOrdenacao(turno) {
                 const historico = analisarHistoricoTurno(turno);
-                if (!historico || historico.totalSorteios < 5) return [];
-                
-                // 1. Analisa frequência geral por posição
-                const frequenciasGerais = analisarFrequenciaPorPosicao(historico, turno);
-                
-                // 2. Analisa dígitos por padrão específico
-                const dadosPorPadrao = analisarDigitosPorPadrao(historico, turno);
-                
-                // 3. Obtém dígitos mais prováveis para cada padrão
-                const digitosProvaveis = obterDigitosProvaveisPorPadrao(dadosPorPadrao, frequenciasGerais, turno);
-                
-                // 4. Identifica padrões nos últimos 3 sorteios
-                const padroesRecentes = identificarPadroesRecentes(historico);
-                
-                // 5. Gera números baseados nos padrões recentes e dígitos prováveis
-                const numerosGerados = gerarNumerosPorPadrao(digitosProvaveis, padroesRecentes, turno);
-                
-                return numerosGerados;
+                console.log(`=== DEBUG ${turno} ===`);
+                console.log(`Total de sorteios: ${historico.totalSorteios}`);
+                console.log(`Primeiro sorteio (mais recente): ${historico.analises[0].numeros[0]}`);
+                console.log(`Segundo sorteio: ${historico.analises[1].numeros[0]}`);
+                console.log(`Último sorteio (mais antigo): ${historico.analises[historico.analises.length-1].numeros[0]}`);
             }
-            
+
             // ==================== RENDERIZAÇÃO ====================
             function renderizarCardsNaSecao(cards, container) {
                 cards.forEach((card, index) => {
@@ -1961,13 +1793,16 @@
                     return;
                 }
                 
+                // Debug para verificar ordenação
+                debugOrdenacao(turno);
+                
                 const historico = analisarHistoricoTurno(turno);
                 const previsao = preverProximoSorteio(turno);
                 const sugestoes = gerarSugestoesInteligentes(turno);
                 const centenasData = obterCentenasData(turno);
                 const deslocamentoPrevisoes = preverDeslocamentoCircular(turno);
                 const projecoesUltimo = analisarUltimoSorteioEProjetar(turno);
-                const previsaoPorDigito = preverComAnalisePorDigito(turno); // NOVA FUNÇÃO CHAMADA
+                const previsoesCompletas = gerarPrevisoesCompletas(turno);
                 
                 if (!historico || !previsao || !sugestoes || !centenasData) return;
                 
@@ -1984,28 +1819,16 @@
                     .slice(0, 10)
                     .map(n => n[0]);
                 
-                // 2. Milhares frias
-                const ultimoIdx = historico.totalSorteios - 1;
-                const todosNumerosPossiveis = Array.from({ length: 10000 }, (_, i) => i.toString().padStart(4, '0'));
-                const atrasos = {};
-                
-                todosNumerosPossiveis.forEach(num => {
-                    atrasos[num] = ultimoIdx + 1;
-                });
-                
-                Object.entries(historico.agregados.ultimaAparicao).forEach(([num, ultimaVez]) => {
-                    atrasos[num] = ultimoIdx - ultimaVez;
-                });
-                
-                const milharesFrios = Object.entries(atrasos)
+                // 2. Milhares frias (CORRIGIDO)
+                const milharesFrios = Object.entries(historico.agregados.ciclosDetectados)
                     .sort((a, b) => b[1] - a[1])
                     .slice(0, 10)
                     .map(item => item[0]);
                 
-                // 3. Milhares probabilísticas (frequência + atraso)
+                // 3. Milhares probabilísticas (frequência + atraso) (CORRIGIDO)
                 const milharesProb = Object.entries(historico.agregados.numerosFrequencia)
                     .map(([num, freq]) => {
-                        const atraso = atrasos[num] || 0;
+                        const atraso = historico.agregados.ciclosDetectados[num] || 0;
                         const score = (freq * 3) + (atraso * 4);
                         return { num, score };
                     })
@@ -2019,33 +1842,16 @@
                     .slice(0,10)
                     .map(f => f[0]);
                 
-                // 5. Dezenas frias
-                const todasDezenas = Array.from({ length: 100 }, (_, i) => i.toString().padStart(2, '0'));
-                const freqFinais = historico.agregados.finaisFrequencia;
-                const atrasoDezenas = {};
-                
-                todasDezenas.forEach(d => {
-                    atrasoDezenas[d] = ultimoIdx + 1;
-                });
-                Object.entries(historico.agregados.ultimaAparicaoFinal).forEach(([d, ultimaVez]) => {
-                    atrasoDezenas[d] = ultimoIdx - ultimaVez;
-                });
-                
-                const dezenasFrias = todasDezenas
-                    .map(d => ({ d, freq: freqFinais[d] || 0, atraso: atrasoDezenas[d] }))
-                    .sort((a, b) => {
-                        if (a.freq === 0 && b.freq > 0) return -1;
-                        if (b.freq === 0 && a.freq > 0) return 1;
-                        return b.atraso - a.atraso;
-                    })
+                // 5. Dezenas frias (CORRIGIDO)
+                const dezenasFrias = Object.entries(historico.agregados.ultimaAparicaoFinal)
+                    .sort((a,b) => b[1] - a[1])
                     .slice(0, 10)
-                    .map(item => item.d);
+                    .map(item => item[0]);
                 
                 // 6. Dezenas probabilísticas
-                const dezenasProb = todasDezenas
-                    .map(d => {
-                        const freq = freqFinais[d] || 0;
-                        const atraso = atrasoDezenas[d];
+                const dezenasProb = Object.entries(historico.agregados.finaisFrequencia)
+                    .map(([d, freq]) => {
+                        const atraso = historico.agregados.ultimaAparicaoFinal[d] || 0;
                         const score = (freq * 30) + (atraso * 2);
                         return { d, score };
                     })
@@ -2059,33 +1865,16 @@
                     .slice(0,10)
                     .map(p => p[0]);
                 
-                // 8. Prefixos frios
-                const todosPrefixos = Array.from({ length: 100 }, (_, i) => i.toString().padStart(2, '0'));
-                const freqPrefixos = historico.agregados.prefixosFrequencia;
-                const atrasoPrefixos = {};
-                
-                todosPrefixos.forEach(p => {
-                    atrasoPrefixos[p] = ultimoIdx + 1;
-                });
-                Object.entries(historico.agregados.ultimaAparicaoPrefixo).forEach(([p, ultimaVez]) => {
-                    atrasoPrefixos[p] = ultimoIdx - ultimaVez;
-                });
-                
-                const prefixosFrios = todosPrefixos
-                    .map(p => ({ p, freq: freqPrefixos[p] || 0, atraso: atrasoPrefixos[p] }))
-                    .sort((a, b) => {
-                        if (a.freq === 0 && b.freq > 0) return -1;
-                        if (b.freq === 0 && a.freq > 0) return 1;
-                        return b.atraso - a.atraso;
-                    })
+                // 8. Prefixos frios (CORRIGIDO)
+                const prefixosFrios = Object.entries(historico.agregados.ultimaAparicaoPrefixo)
+                    .sort((a,b) => b[1] - a[1])
                     .slice(0, 10)
-                    .map(item => item.p);
+                    .map(item => item[0]);
                 
                 // 9. Prefixos probabilísticos
-                const prefixosProb = todosPrefixos
-                    .map(p => {
-                        const freq = freqPrefixos[p] || 0;
-                        const atraso = atrasoPrefixos[p];
+                const prefixosProb = Object.entries(historico.agregados.prefixosFrequencia)
+                    .map(([p, freq]) => {
+                        const atraso = historico.agregados.ultimaAparicaoPrefixo[p] || 0;
                         const score = (freq * 30) + (atraso * 2);
                         return { p, score };
                     })
@@ -2191,16 +1980,16 @@
                     renderizarCardsNaSecao(projecoesCard, projecoesContainer);
                 }
                 
-                // ----- NOVA SEÇÃO: Previsão por Casa Decimal -----
-                if (previsaoPorDigito && previsaoPorDigito.length > 0) {
+                // ----- NOVA SEÇÃO: Previsão com Machine Learning -----
+                if (previsoesCompletas && previsoesCompletas.length > 0) {
                     const previsaoDigitoContainer = document.getElementById('previsaoDigitoCards');
                     previsaoDigitoContainer.innerHTML = '';
                     
                     const previsaoCard = [
                         { 
-                            title: "🔢 Previsão por Casa Decimal", 
-                            numbers: previsaoPorDigito, 
-                            description: "Baseado na estatística de cada posição (milhar, centena, dezena, unidade) dentro dos padrões identificados nos últimos 3 sorteios", 
+                            title: "🤖 TOP 20 Números com ML", 
+                            numbers: previsoesCompletas.slice(0, 20), 
+                            description: `Baseado em ML + Análise Temporal + Dígitos + ${historico.totalSorteios} sorteios analisados`, 
                             type: "trend" 
                         }
                     ];
