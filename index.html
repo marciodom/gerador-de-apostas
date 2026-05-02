@@ -3,538 +3,584 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Apostas</title>
-    <!-- Favicon original -->
+    <title>Gerador de Apostas - Cross-Análise Temporal</title>
     <link rel="icon" type="image/png" href="icons/icone-192.png">
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#1a237e">
     <style>
-        :root {
-            --primary: #1a237e;
-            --secondary: #283593;
-            --hot: #ff5722;
-            --cold: #2196f3;
-            --trend: #9c27b0;
-            --success: #4caf50;
-            --warning: #ff9800;
-            --danger: #f44336;
-            --pattern: #673ab7;
-            --shift: #00acc1;
-        }
         
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0b3b5c 0%, #1b5a7a 100%);
-            color: #333;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 25px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-        }
-        
-        h1 {
-            font-size: 1.8rem;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .subtitle {
-            font-size: 1rem;
-            opacity: 0.9;
-            margin-bottom: 20px;
-        }
-        
-        /* Turno Selector */
-        .turno-selector {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        
-        .turno-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .turno-btn {
-            padding: 15px;
-            border: none;
-            border-radius: 10px;
-            font-weight: bold;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: #f5f5f5;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .turno-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        
-        .turno-btn.active {
-            background: linear-gradient(135deg, var(--success) 0%, #2E7D32 100%);
-            color: white;
-            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
-        }
-        
-        .turno-btn.manha { background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); color: white; }
-        .turno-btn.tarde { background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); color: white; }
-        .turno-btn.tarde2 { background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); color: white; }
-        .turno-btn.noite { background: linear-gradient(135deg, #3F51B5 0%, #283593 100%); color: white; }
-        
-        .generate-btn {
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, var(--hot) 0%, #D84315 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 20px rgba(255,87,34,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        
-        .generate-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(255,87,34,0.4);
-        }
-        
-        /* Turno Info */
-        .turno-info {
-            background: white;
-            color: #333;
-            text-align: center;
-            margin: 15px 0 30px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        }
-        
-        /* Seções de Cards */
-        .section-title {
-            font-size: 1.4rem;
-            font-weight: bold;
-            margin: 40px 0 20px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #ffffff;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .section-title::before {
-            content: '';
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--primary);
-        }
-        
-        /* Cards Grid */
-        .cards-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-        
-        .card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            animation: fadeIn 0.5s ease;
-            min-height: 200px;
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.3s ease;
-            border-top: 5px solid transparent;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .card-title::before {
-            content: '';
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-        
-        .card.hot .card-title::before { background: var(--hot); }
-        .card.cold .card-title::before { background: var(--cold); }
-        .card.trend .card-title::before { background: var(--trend); }
-        .card.success .card-title::before { background: var(--success); }
-        .card.warning .card-title::before { background: var(--warning); }
-        .card.danger .card-title::before { background: var(--danger); }
-        .card.pattern .card-title::before { background: var(--pattern); }
-        .card.shift .card-title::before { background: var(--shift); }
-        
-        .card.hot { border-top-color: var(--hot); }
-        .card.cold { border-top-color: var(--cold); }
-        .card.trend { border-top-color: var(--trend); }
-        .card.success { border-top-color: var(--success); }
-        .card.warning { border-top-color: var(--warning); }
-        .card.danger { border-top-color: var(--danger); }
-        .card.pattern { border-top-color: var(--pattern); }
-        .card.shift { border-top-color: var(--shift); }
-        
-        .numbers-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-grow: 1;
-        }
-        
-        .number-badge {
-            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-            padding: 12px 5px;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 1rem;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 50px;
-            word-break: break-word;
-            overflow: hidden;
-            transition: transform 0.2s;
-        }
-        
-        .number-badge:hover {
-            transform: scale(1.05);
-        }
-        
-        .pattern-badge {
-            font-size: 0.85rem;
-            padding: 10px 5px;
-            min-height: 45px;
-            line-height: 1.2;
-            background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%);
-        }
-        
-        .hot-badge { background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%); }
-        .cold-badge { background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%); }
-        .trend-badge { background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%); }
-        .success-badge { background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); }
-        .warning-badge { background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%); }
-        .danger-badge { background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%); }
-        .shift-badge { background: linear-gradient(135deg, #E0F7FA 0%, #B2EBF2 100%); }
-        
-        .card-description {
-            font-size: 0.9rem;
-            color: #666;
-            margin-top: 12px;
-            line-height: 1.4;
-            padding-top: 12px;
-            border-top: 1px dashed #eee;
-        }
-        
-        /* Estatísticas Avançadas */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-        
-        .stat-item {
-            background: #f8f9fa;
-            padding: 12px;
-            border-radius: 8px;
-            border-left: 4px solid var(--primary);
-        }
-        
-        /* Estilos da Calculadora de Prêmios */
-        .calc-card, .quick-access-card {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            margin: 40px auto;
-            max-width: 600px;
-            border-top: 5px solid #3b82f6;
-        }
-        
-        .calc-title, .quick-access-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #1a237e;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-align: center;
-            justify-content: center;
-        }
-        
-        .calc-title::before, .quick-access-title::before {
-            font-size: 1.5rem;
-        }
-        
-        .calc-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .calc-input, .calc-select {
-            padding: 14px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 14px;
-            background: #f8fafc;
-            color: #333;
-            outline: none;
-            width: 100%;
-            transition: border-color 0.3s;
-        }
-        
-        .calc-input:focus, .calc-select:focus {
-            border-color: #3b82f6;
-        }
-        
-        .btn-calc {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 10px;
-            font-size: 1rem;
-        }
-        
-        .btn-calc:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
-        }
-        
-        .btn-clear-calc {
-            padding: 14px;
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            width: 100%;
-        }
-        
-        .result-box {
-            margin-top: 20px;
-            padding: 20px;
-            background: rgba(34, 197, 94, 0.1);
-            border: 2px solid #22c55e;
-            border-radius: 8px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #166534;
-            display: none;
-            text-align: center;
-        }
-        
-        /* Estilos dos botões de acesso rápido */
-        .btn-link {
-            display: block;
-            width: 100%;
-            padding: 16px;
-            margin-top: 15px;
-            text-align: center;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: white;
-            font-size: 1rem;
-        }
-        
-        .btn-aposta {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-        }
-        
-        .btn-resultado {
-            background: linear-gradient(135deg, #475569 0%, #334155 100%);
-        }
-        
-        .btn-link:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        
-        /* Sistema de Gerenciamento de Apostas */
-        .apostas-card {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            margin: 40px auto;
-            max-width: 600px;
-            border-top: 5px solid #9c27b0;
-        }
-        
-        .apostas-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #1a237e;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-align: center;
-            justify-content: center;
-        }
-        
-        /* Rodapé */
-        footer {
-            text-align: center;
-            color: #ccc;
-            margin-top: 60px;
-            padding: 30px 20px;
-            font-size: 0.9rem;
-            opacity: 0.8;
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        @media (max-width: 768px) {
-            .cards-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .turno-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .calc-row {
-                grid-template-columns: 1fr;
-            }
-            
-            .number-badge {
-                min-height: 45px;
-                font-size: 1rem;
-            }
-            
-            .pattern-badge {
-                font-size: 0.8rem;
-                min-height: 40px;
-            }
-            
-            .section-title {
-                font-size: 1.2rem;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .turno-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            header {
-                padding: 20px 15px;
-            }
-            
-            h1 {
-                font-size: 1.5rem;
-            }
-        }
-        
-        /* Estilo para cards com texto longo */
-        .text-card .numbers-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .text-card .number-badge {
-            min-height: auto;
-            padding: 12px;
-            font-size: 0.9rem;
-            font-weight: normal;
-            text-align: left;
-            justify-content: flex-start;
-        }
-        
-        .info-card {
-            grid-column: span 2;
-        }
-        
-        /* Animações para entrada dos cards */
-        .card:nth-child(1) { animation-delay: 0.1s; }
-        .card:nth-child(2) { animation-delay: 0.2s; }
-        .card:nth-child(3) { animation-delay: 0.3s; }
-        .card:nth-child(4) { animation-delay: 0.4s; }
-        .card:nth-child(5) { animation-delay: 0.5s; }
-        .card:nth-child(6) { animation-delay: 0.6s; }
+     :root {
+    --primary: #1a237e;
+    --secondary: #283593;
+    --hot: #ff5722;
+    --cold: #2196f3;
+    --trend: #9c27b0;
+    --success: #4caf50;
+    --warning: #ff9800;
+    --danger: #f44336;
+    --pattern: #673ab7;
+    --shift: #00acc1;
+    --migrate: #e91e63;
+    --momentum: #00bfa5;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #0b3b5c 0%, #1b5a7a 100%);
+    color: #333;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 25px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+h1 {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.subtitle {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin-bottom: 10px;
+}
+
+.badge-new {
+    background: var(--migrate);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.turno-selector {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.turno-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.turno-btn {
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f5f5f5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.turno-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.turno-btn.active {
+    background: linear-gradient(135deg, var(--success) 0%, #2E7D32 100%);
+    color: white;
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+}
+
+.turno-btn.manha { background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); color: white; }
+.turno-btn.tarde { background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); color: white; }
+.turno-btn.tarde2 { background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); color: white; }
+.turno-btn.noite { background: linear-gradient(135deg, #3F51B5 0%, #283593 100%); color: white; }
+
+.generate-btn {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--hot) 0%, #D84315 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 20px rgba(255,87,34,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.generate-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(255,87,34,0.4);
+}
+
+.turno-info {
+    background: white;
+    color: #333;
+    text-align: center;
+    margin: 15px 0 30px;
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.info-label { color: #666; font-weight: normal; }
+.info-value { color: var(--primary); }
+.momentum-up { color: #4caf50; }
+.momentum-down { color: #f44336; }
+.momentum-stable { color: #ff9800; }
+
+.section-title {
+    font-size: 1.4rem;
+    font-weight: bold;
+    margin: 40px 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #ffffff;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-title::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--primary);
+}
+
+/* Grid principal - mantido */
+.cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+/* NOVO: Container horizontal para cards de texto - CORRIGIDO */
+.cards-container-horizontal {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+    max-width: 100%;
+}
+
+/* NOVO: Card com layout horizontal interno - CORRIGIDO */
+.card-horizontal {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    animation: fadeIn 0.5s ease;
+    transition: transform 0.3s ease;
+    border-top: 5px solid transparent;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.card-horizontal:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+.card-horizontal .card-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    word-break: break-word;
+}
+
+.card-horizontal .card-title::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.card-horizontal.migrate { border-top: 5px solid var(--migrate); }
+.card-horizontal.migrate .card-title::before { background: var(--migrate); }
+.card-horizontal.momentum { border-top: 5px solid var(--momentum); }
+.card-horizontal.momentum .card-title::before { background: var(--momentum); }
+.card-horizontal.pattern { border-top: 5px solid var(--pattern); }
+.card-horizontal.pattern .card-title::before { background: var(--pattern); }
+
+/* NOVO: Lista horizontal de badges */
+.horizontal-badge-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+}
+
+.horizontal-badge {
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    white-space: normal;
+    word-break: break-word;
+    transition: transform 0.2s;
+    max-width: 100%;
+    line-height: 1.4;
+}
+
+.horizontal-badge:hover {
+    transform: scale(1.05);
+}
+
+.badge-migrate {
+    background: linear-gradient(135deg, #FCE4EC 0%, #F8BBD0 100%);
+    color: #880e4f;
+}
+
+.badge-momentum {
+    background: linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%);
+    color: #004d40;
+}
+
+.badge-pattern {
+    background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%);
+    color: #4a148c;
+}
+
+.badge-era {
+    background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+    color: #e65100;
+    font-weight: bold;
+}
+
+.card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    animation: fadeIn 0.5s ease;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+    border-top: 5px solid transparent;
+}
+
+.card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-title::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.card.hot .card-title::before { background: var(--hot); }
+.card.cold .card-title::before { background: var(--cold); }
+.card.trend .card-title::before { background: var(--trend); }
+.card.success .card-title::before { background: var(--success); }
+.card.warning .card-title::before { background: var(--warning); }
+.card.danger .card-title::before { background: var(--danger); }
+.card.pattern .card-title::before { background: var(--pattern); }
+.card.shift .card-title::before { background: var(--shift); }
+.card.migrate .card-title::before { background: var(--migrate); }
+.card.momentum .card-title::before { background: var(--momentum); }
+
+.card.hot { border-top-color: var(--hot); }
+.card.cold { border-top-color: var(--cold); }
+.card.trend { border-top-color: var(--trend); }
+.card.success { border-top-color: var(--success); }
+.card.warning { border-top-color: var(--warning); }
+.card.danger { border-top-color: var(--danger); }
+.card.pattern { border-top-color: var(--pattern); }
+.card.shift { border-top-color: var(--shift); }
+.card.migrate { border-top-color: var(--migrate); }
+.card.momentum { border-top-color: var(--momentum); }
+
+.numbers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-grow: 1;
+}
+
+.number-badge {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    padding: 12px 5px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+    word-break: break-word;
+    overflow: hidden;
+    transition: transform 0.2s;
+}
+
+.number-badge:hover { transform: scale(1.05); }
+
+.hot-badge { background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%); }
+.cold-badge { background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%); }
+.trend-badge { background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%); }
+.success-badge { background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); }
+.warning-badge { background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%); }
+.danger-badge { background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%); }
+.shift-badge { background: linear-gradient(135deg, #E0F7FA 0%, #B2EBF2 100%); }
+.migrate-badge { background: linear-gradient(135deg, #FCE4EC 0%, #F8BBD0 100%); }
+.momentum-badge { background: linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%); }
+
+.card-description {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 12px;
+    line-height: 1.4;
+    padding-top: 12px;
+    border-top: 1px dashed #eee;
+}
+
+.calc-card, .quick-access-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    margin: 40px auto;
+    max-width: 600px;
+    border-top: 5px solid #3b82f6;
+}
+
+.calc-title, .quick-access-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #1a237e;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+    justify-content: center;
+}
+
+.calc-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.calc-input, .calc-select {
+    padding: 14px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #f8fafc;
+    color: #333;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.3s;
+}
+
+.calc-input:focus, .calc-select:focus { border-color: #3b82f6; }
+
+.btn-calc {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 10px;
+    font-size: 1rem;
+}
+
+.btn-calc:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+}
+
+.btn-clear-calc {
+    padding: 14px;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.result-box {
+    margin-top: 20px;
+    padding: 20px;
+    background: rgba(34, 197, 94, 0.1);
+    border: 2px solid #22c55e;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #166534;
+    display: none;
+    text-align: center;
+}
+
+.btn-link {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    margin-top: 15px;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: white;
+    font-size: 1rem;
+}
+
+.btn-aposta { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+.btn-resultado { background: linear-gradient(135deg, #475569 0%, #334155 100%); }
+.btn-link:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+
+.apostas-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    margin: 40px auto;
+    max-width: 600px;
+    border-top: 5px solid #9c27b0;
+}
+
+.apostas-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #1a237e;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+    justify-content: center;
+}
+
+footer {
+    text-align: center;
+    color: #ccc;
+    margin-top: 60px;
+    padding: 30px 20px;
+    font-size: 0.9rem;
+    opacity: 0.8;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+@media (max-width: 768px) {
+    .cards-container { grid-template-columns: 1fr; }
+    .cards-container-horizontal { grid-template-columns: 1fr; }
+    .turno-grid { grid-template-columns: repeat(2, 1fr); }
+    .calc-row { grid-template-columns: 1fr; }
+    .horizontal-badge { font-size: 0.75rem; padding: 6px 10px; }
+    .number-badge { min-height: 45px; font-size: 1rem; }
+    .section-title { font-size: 1.2rem; }
+    .turno-info { flex-direction: column; gap: 10px; }
+}
+
+@media (max-width: 480px) {
+    .turno-grid { grid-template-columns: 1fr; }
+    header { padding: 20px 15px; }
+    h1 { font-size: 1.5rem; }
+}
+
+.card:nth-child(1) { animation-delay: 0.1s; }
+.card:nth-child(2) { animation-delay: 0.2s; }
+.card:nth-child(3) { animation-delay: 0.3s; }
+.card:nth-child(4) { animation-delay: 0.4s; }
+.card:nth-child(5) { animation-delay: 0.5s; }
+.card:nth-child(6) { animation-delay: 0.6s; }
+  
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🧠 Gerador de Apostas</h1>
-            <p class="subtitle">Análise avançada com 14 padrões estratégicos | Dados externos</p>
+            <h1>🧠 Gerador de Apostas - Cross-Análise Temporal</h1>
+            <p class="subtitle">Análise com Migração de Padrões, Momentum e Ciclos Inter-Turnos</p>
+            <span class="badge-new">🔥 NOVA CROSS-ANÁLISE ATIVADA</span>
         </header>
-        
+
         <div class="turno-selector">
             <h2>Selecione o Turno:</h2>
             <div class="turno-grid">
@@ -543,53 +589,45 @@
                 <button class="turno-btn tarde2" data-turno="Tarde II">🌇 Tarde II</button>
                 <button class="turno-btn noite" data-turno="Noite">🌙 Noite</button>
             </div>
-            
             <button class="generate-btn" id="gerarBtn">
-                🧠 Gerar Análise Inteligente Completa
+                🧠 Gerar Análise Temporal Completa
             </button>
         </div>
-        
+
         <div class="turno-info" id="turnoInfo">
-            Analisando: <span id="currentTurno">Manhã</span> | 
-            Total de Sorteios: <span id="totalSorteios">0</span> |
-            Padrões Ativos: <span id="padroesAtivos">0</span>
-        </div>
-        
-        <!-- Seção 1: Estatísticas Básicas -->
-        <h2 class="section-title">📊 Estatísticas Básicas</h2>
-        <div class="cards-container" id="basicCards">
-            <!-- Cards serão gerados após carregar os dados -->
+            <div class="info-item"><span class="info-label">Turno:</span> <span id="currentTurno" class="info-value">Manhã</span></div>
+            <div class="info-item"><span class="info-label">Sorteios:</span> <span id="totalSorteios" class="info-value">0</span></div>
+            <div class="info-item"><span class="info-label">Padrões:</span> <span id="padroesAtivos" class="info-value">0</span></div>
+            <div class="info-item"><span class="info-label">Momentum:</span> <span id="momentumInfo" class="info-value momentum-stable">-</span></div>
+            <div class="info-item"><span class="info-label">Migrações:</span> <span id="migracoesInfo" class="info-value">0</span></div>
+            <div class="info-item"><span class="info-label">Hash:</span> <span id="dataHash" class="info-value">-</span></div>
         </div>
 
-        <!-- Seção 1.2: Centenas (3 dígitos) -->
-        <h2 class="section-title">🔢 Análise de Centenas (3 dígitos)</h2>
-        <div class="cards-container" id="centenasCards"></div>
-        
-        <!-- Seção 2: Padrões Estratégicos -->
-        <h2 class="section-title">🎭 Padrões Estratégicos</h2>
-        <div class="cards-container" id="patternCards"></div>
-        
-        <!-- Seção 3: Previsões Inteligentes -->
-        <h2 class="section-title">🔮 Previsões Inteligentes</h2>
-        <div class="cards-container" id="predictionCards"></div>
-        
-        <!-- Seção 4: Ciclos e Atrasados -->
-        <h2 class="section-title">🔄 Ciclos e Atrasados</h2>
-        <div class="cards-container" id="cycleCards"></div>
-        
-        <!-- Seção 5: Estratégias Dominantes -->
-        <h2 class="section-title">🎯 Estratégias Dominantes</h2>
-        <div class="cards-container" id="strategyCards"></div>
-        
-        <!-- NOVA SEÇÃO: Projeções Baseadas no Último Sorteio -->
-        <h2 class="section-title">🎯 Projeções do Último Sorteio</h2>
-        <div class="cards-container" id="projecoesCards"></div>
-        
-        <!-- NOVA SEÇÃO: Previsão com Machine Learning -->
-        <h2 class="section-title">🤖 Previsão com Machine Learning</h2>
+        <!-- SEÇÃO 1: MILHARES PROBABILÍSTICAS (20 valores) -->
+        <h2 class="section-title">📈 20 Milhares Probabilísticas (Cross-Análise)</h2>
+        <div class="cards-container" id="milharesProbCards"></div>
+
+        <!-- SEÇÃO 2: CENTENAS PROBABILÍSTICAS (20 valores) -->
+        <h2 class="section-title">🔢 20 Centenas Probabilísticas (Cross-Análise)</h2>
+        <div class="cards-container" id="centenasProbCards"></div>
+
+        <!-- SEÇÃO 3: DEZENAS PROBABILÍSTICAS (20 valores) -->
+        <h2 class="section-title">🎯 20 Dezenas Probabilísticas (Cross-Análise)</h2>
+        <div class="cards-container" id="dezenasProbCards"></div>
+
+        <!-- SEÇÃO 4: MIGRAÇÕES E MOMENTUM (HORIZONTAL) -->
+        <h2 class="section-title">🔄 Cross-Análise: Migrações e Momentum</h2>
+        <div class="cards-container-horizontal" id="migrationCards"></div>
+
+        <!-- SEÇÃO 5: PREVISÃO MACHINE LEARNING -->
+        <h2 class="section-title">🤖 Previsão com Machine Learning Cross-Turno</h2>
         <div class="cards-container" id="previsaoDigitoCards"></div>
-        
-        <!-- Calculadora de Prêmios -->
+
+        <!-- SEÇÃO 6: DICAS ESTRATÉGICAS (HORIZONTAL) -->
+        <h2 class="section-title">💡 Estratégias e Dicas</h2>
+        <div class="cards-container-horizontal" id="strategyCards"></div>
+
+        <!-- CALCULADORA DE PRÊMIOS -->
         <div class="calc-card">
             <div class="calc-title">🧮 Calculadora de Prêmios</div>
             <div class="calc-row">
@@ -613,10 +651,9 @@
             <div id="resultado_calc" class="result-box"></div>
         </div>
 
-        <!-- Sistema de Gerenciamento de Apostas -->
+        <!-- GERENCIAMENTO DE APOSTAS -->
         <div class="apostas-card">
             <div class="apostas-title">📋 Sistema de Gerenciamento de Apostas</div>
-            
             <div style="margin-bottom: 20px;">
                 <label style="font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px; display: block;">TURNO / EXTRAÇÃO</label>
                 <select id="inTurno" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; background: #d1e9ff; font-weight: bold;">
@@ -626,105 +663,36 @@
                     <option value="EXTRACAO NOITE">NOITE</option>
                 </select>
             </div>
-
             <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                <div>
-                    <label style="font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px; display: block;">BILHETES</label>
-                    <textarea id="inBilhetes" placeholder="Ex: 24, 25" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; height: 80px; resize: vertical;"></textarea>
-                </div>
-                <div>
-                    <label style="font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px; display: block;">INT.</label>
-                    <select id="inInt" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px;">
-                        <option value="1/1">1/1</option>
-                        <option value="2/2">2/2</option>
-                        <option value="3/3">3/3</option>
-                        <option value="4/4">4/4</option>
-                        <option value="5/5">5/5</option>
-                        <option value="6/6">6/6</option>
-                        <option value="7/7">7/7</option>
-                        <option value="8/8">8/8</option>
-                        <option value="9/9">9/9</option>
-                        <option value="10/10">10/10</option>
-                        <option value="1/5" selected>1/5</option>
-                        <option value="1/10">1/10</option>
-                    </select>
-                </div>
-                <div>
-                    <label style="font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px; display: block;">VALOR</label>
-                    <input type="number" id="inValor" step="0.50" placeholder="1.00" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px;">
-                </div>
+                <div><label style="font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px; display: block;">BILHETES</label><textarea id="inBilhetes" placeholder="Ex: 24, 25" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; height: 80px; resize: vertical;"></textarea></div>
+                <div><label style="font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px; display: block;">INT.</label><select id="inInt" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px;"><option value="1/1">1/1</option><option value="2/2">2/2</option><option value="3/3">3/3</option><option value="4/4">4/4</option><option value="5/5">5/5</option><option value="6/6">6/6</option><option value="7/7">7/7</option><option value="8/8">8/8</option><option value="9/9">9/9</option><option value="10/10">10/10</option><option value="1/5" selected>1/5</option><option value="1/10">1/10</option></select></div>
+                <div><label style="font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px; display: block;">VALOR</label><input type="number" id="inValor" step="0.50" placeholder="1.00" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px;"></div>
             </div>
-
-            <button onclick="inserirAposta()" style="width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s; background: #d1e9ff; color: #1e40af; margin-bottom: 20px;">+ INSERIR APOSTA</button>
-
-            <div id="listaVisual" style="margin-top: 20px; border-top: 2px solid #f1f5f9; padding-top: 15px;">
-                <span style="font-weight: 600; font-size: 0.85rem; color: #475569; display: block;">APOSTAS NO BILHETE:</span>
-            </div>
-
+            <button onclick="inserirAposta()" style="width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #d1e9ff; color: #1e40af; margin-bottom: 20px;">+ INSERIR APOSTA</button>
+            <div id="listaVisual" style="margin-top: 20px; border-top: 2px solid #f1f5f9; padding-top: 15px;"><span style="font-weight: 600; font-size: 0.85rem; color: #475569;">APOSTAS NO BILHETE:</span></div>
             <div style="display: grid; grid-template-columns: 2fr 2fr; gap: 15px; margin-top:20px;">
-                <div>
-                    <label style="font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px; display: block;">MILHAR DE BRINDE</label>
-                    <input type="text" id="inBrinde" placeholder="Ex: 2426" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px;">
-                </div>
-                <div>
-                    <label style="font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px; display: block;">INT. BRINDE</label>
-                    <select id="inIntBrinde" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px;">
-                        <option value="1/1" selected>1/1</option>
-                        <option value="2/2">2/2</option>
-                        <option value="3/3">3/3</option>
-                        <option value="4/4">4/4</option>
-                        <option value="5/5">5/5</option>
-                        <option value="6/6">6/6</option>
-                        <option value="7/7">7/7</option>
-                        <option value="8/8">8/8</option>
-                        <option value="9/9">9/9</option>
-                        <option value="10/10">10/10</option>
-                        <option value="1/5">1/5</option>
-                        <option value="1/10">1/10</option>
-                    </select>
-                </div>
+                <div><label style="font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px; display: block;">MILHAR DE BRINDE</label><input type="text" id="inBrinde" placeholder="Ex: 2426" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px;"></div>
+                <div><label style="font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px; display: block;">INT. BRINDE</label><select id="inIntBrinde" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px;"><option value="1/1" selected>1/1</option><option value="2/2">2/2</option><option value="3/3">3/3</option><option value="4/4">4/4</option><option value="5/5">5/5</option><option value="6/6">6/6</option><option value="7/7">7/7</option><option value="8/8">8/8</option><option value="9/9">9/9</option><option value="10/10">10/10</option><option value="1/5">1/5</option><option value="1/10">1/10</option></select></div>
             </div>
-
             <div style="display: flex; gap: 12px; margin-top: 20px;">
-                <button onclick="limparTudo()" style="flex: 1; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s; background: #fee2e2; color: #991b1b;">LIMPAR TUDO</button>
-                <button onclick="gerarRelatorio()" style="flex: 1; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s; background: #dcfce7; color: #166534;">GERAR APOSTA</button>
+                <button onclick="limparTudo()" style="flex: 1; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #fee2e2; color: #991b1b;">LIMPAR TUDO</button>
+                <button onclick="gerarRelatorio()" style="flex: 1; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #dcfce7; color: #166534;">GERAR APOSTA</button>
             </div>
         </div>
 
-        <!-- Botões de Acesso Rápido -->
+        <!-- ACESSO RÁPIDO -->
         <div class="quick-access-card">
             <div class="quick-access-title">🔗 Acessos Rápidos</div>
             <a href="https://api.whatsapp.com/send?phone=5585998170365" target="_blank" class="btn-link btn-aposta">Fazer Aposta via WhatsApp</a>
             <a href="https://www.lotece.com.br/resultados" target="_blank" class="btn-link btn-resultado">Resultado Oficial Lotece</a>
         </div>
-        
-        <!-- Rodapé -->
-        <footer>
-            © Todos os direitos reservados</br> Desenvolvido por Márcio Dom 
-        </footer>
 
-        <!-- Template para impressão de apostas (oculto) -->
+        <footer>© Todos os direitos reservados<br>Desenvolvido por Márcio Dom</footer>
+
         <div id="pule-digital" style="position: absolute; left: -9999px; width: 320px; background: #fff; padding: 25px; color: #000; font-family: 'Courier New', Courier, monospace;">
-            <div style="text-align: center; text-transform: uppercase; border-bottom: 2px dashed #000; margin-bottom: 12px; padding-bottom: 8px;">
-                <h2 id="outTurno" style="margin: 0; font-size: 1.4rem;">EXTRACAO</h2>
-            </div>
-            <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr>
-                        <th style="text-align: left; border-bottom: 1px solid #000; font-size: 0.9rem; padding: 5px 0;">Bilhetes</th>
-                        <th style="text-align: right; border-bottom: 1px solid #000; font-size: 0.9rem; padding: 5px 0;">Int.</th>
-                        <th style="text-align: right; border-bottom: 1px solid #000; font-size: 0.9rem; padding: 5px 0;">Valor</th>
-                    </tr>
-                </thead>
-                <tbody id="outCorpo"></tbody>
-            </table>
-            <div id="areaBrinde" style="display: none;">
-                <div style="text-align: center; font-size: 1.3rem; font-weight: bold; margin-top: 25px; border-top: 1px solid #000; padding-top: 12px; text-transform: uppercase;">MILHAR DE BRINDE</div>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead><tr><th style="text-align: left; border-bottom: 1px solid #000; font-size: 0.9rem; padding: 5px 0;">Milhar</th><th style="text-align: right; border-bottom: 1px solid #000; font-size: 0.9rem; padding: 5px 0;">Int.</th></tr></thead>
-                    <tbody><tr><td id="outBrindeNum" style="font-size: 1.4rem; padding: 6px 0;"></td><td id="outBrindeInt" style="text-align: right; font-size: 1.4rem; padding: 6px 0;"></td></tr></tbody>
-                </table>
-            </div>
+            <div style="text-align: center; text-transform: uppercase; border-bottom: 2px dashed #000; margin-bottom: 12px; padding-bottom: 8px;"><h2 id="outTurno" style="margin: 0; font-size: 1.4rem;">EXTRACAO</h2></div>
+            <table style="width: 100%; border-collapse: collapse;"><thead><tr><th style="text-align: left; border-bottom: 1px solid #000; font-size: 0.9rem; padding: 5px 0;">Bilhetes</th><th style="text-align: right; border-bottom: 1px solid #000; font-size: 0.9rem; padding: 5px 0;">Int.</th><th style="text-align: right; border-bottom: 1px solid #000; font-size: 0.9rem; padding: 5px 0;">Valor</th></tr></thead><tbody id="outCorpo"></tbody></table>
+            <div id="areaBrinde" style="display: none;"><div style="text-align: center; font-size: 1.3rem; font-weight: bold; margin-top: 25px; border-top: 1px solid #000; padding-top: 12px; text-transform: uppercase;">MILHAR DE BRINDE</div><table style="width: 100%; border-collapse: collapse;"><thead><tr><th style="text-align: left; border-bottom: 1px solid #000; font-size: 0.9rem; padding: 5px 0;">Milhar</th><th style="text-align: right; border-bottom: 1px solid #000; font-size: 0.9rem; padding: 5px 0;">Int.</th></tr></thead><tbody><tr><td id="outBrindeNum" style="font-size: 1.4rem; padding: 6px 0;"></td><td id="outBrindeInt" style="text-align: right; font-size: 1.4rem; padding: 6px 0;"></td></tr></tbody></table></div>
         </div>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -732,1031 +700,232 @@
             // ==================== GLOBAL ====================
             let dadosLotece = null;
             let apostasAcumuladas = [];
+            const TURNOS = ['Manhã', 'Tarde', 'Tarde II', 'Noite'];
 
-            // ==================== FUNÇÕES DE ANÁLISE ====================
+            // ==================== SEMENTE ALEATÓRIA ====================
+            class AleatorioControlado {
+                constructor(semente) { this.semente = semente; this.contador = 0; }
+                proximo(min = 0, max = 1) { this.contador++; const hash = this.hashCode(this.semente + this.contador); return min + (hash % 10000) / 10000 * (max - min); }
+                embaralhar(array) { const arr = [...array]; for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(this.proximo(0, i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+                hashCode(str) { let hash = 0; for (let i = 0; i < str.length; i++) { hash = ((hash << 5) - hash) + str.charCodeAt(i); hash = hash & hash; } return Math.abs(hash); }
+            }
+
+            // ==================== HASH DOS DADOS ====================
+            function gerarHashDados(dados) {
+                if (!dados) return '0000';
+                let amostra = '';
+                TURNOS.forEach(turno => { if (dados[turno]) amostra += dados[turno].slice(-10).flat().join(''); });
+                const agora = new Date(); amostra += `${agora.getFullYear()}${agora.getMonth()}${agora.getDate()}${agora.getHours()}`;
+                let hash = 0; for (let i = 0; i < amostra.length; i++) { hash = ((hash << 5) - hash) + amostra.charCodeAt(i); hash = hash & hash; }
+                return Math.abs(hash).toString(16).substring(0, 8);
+            }
+
+            // ==================== CROSS-ANÁLISE TEMPORAL ====================
+            class CrossAnaliseTemporal {
+                constructor(dados) {
+                    this.dados = dados; this.mapaMigracoes = {}; this.momentumDigitos = {}; this.ciclosDominancia = {};
+                    this._analisarTodosTurnos();
+                }
+                _analisarTodosTurnos() {
+                    TURNOS.forEach(turno => { if (!this.dados[turno]) return; this.mapaMigracoes[turno] = { finais: {}, prefixos: {}, digitos: {} }; });
+                    const aparicoesGlobais = {};
+                    TURNOS.forEach(turno => {
+                        if (!this.dados[turno]) return;
+                        const sorteios = [...this.dados[turno]].reverse();
+                        sorteios.forEach((sorteio, idx) => {
+                            sorteio.forEach(num => {
+                                if (num.length !== 4) return;
+                                const final = num.substring(2, 4), prefixo = num.substring(0, 2), digitos = num.split('');
+                                if (!aparicoesGlobais[final]) aparicoesGlobais[final] = [];
+                                if (!aparicoesGlobais[prefixo]) aparicoesGlobais[prefixo] = [];
+                                if (!aparicoesGlobais[num]) aparicoesGlobais[num] = [];
+                                aparicoesGlobais[final].push({ turno, idx, numero: num });
+                                aparicoesGlobais[prefixo].push({ turno, idx, numero: num });
+                                aparicoesGlobais[num].push({ turno, idx, numero: num });
+                                if (!this.mapaMigracoes[turno].finais[final]) this.mapaMigracoes[turno].finais[final] = 0;
+                                if (!this.mapaMigracoes[turno].prefixos[prefixo]) this.mapaMigracoes[turno].prefixos[prefixo] = 0;
+                                digitos.forEach(d => { if (!this.mapaMigracoes[turno].digitos[d]) this.mapaMigracoes[turno].digitos[d] = 0; this.mapaMigracoes[turno].digitos[d]++; });
+                                this.mapaMigracoes[turno].finais[final]++; this.mapaMigracoes[turno].prefixos[prefixo]++;
+                            });
+                        });
+                    });
+                    this.migracoesDetectadas = [];
+                    for (const [elemento, aparicoes] of Object.entries(aparicoesGlobais)) {
+                        if (aparicoes.length < 2) continue;
+                        aparicoes.sort((a, b) => b.idx - a.idx);
+                        const turnosVisitados = [...new Set(aparicoes.map(a => a.turno))];
+                        if (turnosVisitados.length >= 2) {
+                            const sequencia = [];
+                            for (let i = 1; i < aparicoes.length; i++) { if (aparicoes[i].turno !== aparicoes[i-1].turno) sequencia.push({ de: aparicoes[i-1].turno, para: aparicoes[i].turno, elemento, intervalo: Math.abs(aparicoes[i].idx - aparicoes[i-1].idx) }); }
+                            if (sequencia.length > 0) this.migracoesDetectadas.push({ elemento, tipo: elemento.length === 4 ? 'milhar' : elemento.length === 2 ? 'par' : 'digito', turnosVisitados, totalAparicoes: aparicoes.length, sequencia, ultimaAparicao: aparicoes[0] });
+                        }
+                    }
+                    TURNOS.forEach(turno => {
+                        if (!this.dados[turno]) return;
+                        this.momentumDigitos[turno] = {};
+                        const sorteios = [...this.dados[turno]].reverse(), totalHistorico = sorteios.length * 10, recentes = sorteios.slice(0, 3);
+                        for (let d = 0; d <= 9; d++) {
+                            const digito = d.toString(); let freqHistorica = 0, freqRecente = 0;
+                            sorteios.forEach(s => { s.forEach(num => { if (num.includes(digito)) freqHistorica++; }); });
+                            recentes.forEach(s => { s.forEach(num => { if (num.includes(digito)) freqRecente++; }); });
+                            const taxaHistorica = freqHistorica / Math.max(1, totalHistorico), taxaRecente = freqRecente / Math.max(1, 30);
+                            const momentum = taxaHistorica > 0 ? (taxaRecente / taxaHistorica - 1) * 100 : 0;
+                            this.momentumDigitos[turno][digito] = { freqHistorica, freqRecente, taxaHistorica, taxaRecente, momentum: Math.round(momentum), status: momentum > 20 ? 'up' : momentum < -20 ? 'down' : 'stable' };
+                        }
+                    });
+                    TURNOS.forEach(turno => { if (!this.dados[turno]) return; this.ciclosDominancia[turno] = this._detectarEras(turno); });
+                }
+                _detectarEras(turno) {
+                    const eras = [], sorteios = [...this.dados[turno]].reverse(), sliceSize = Math.max(5, Math.floor(sorteios.length / 4));
+                    for (let i = 0; i < sorteios.length; i += sliceSize) {
+                        const slice = sorteios.slice(i, i + sliceSize), contagem = {};
+                        slice.forEach(s => { s.forEach(num => { if (num.length === 4) { const milhar = num[0]; contagem[milhar] = (contagem[milhar] || 0) + 1; } }); });
+                        const dominante = Object.entries(contagem).sort((a, b) => b[1] - a[1])[0];
+                        if (dominante) eras.push({ periodoInicio: i, periodoFim: i + sliceSize, digitoDominante: dominante[0], frequencia: dominante[1], totalNumeros: slice.length * 10 });
+                    }
+                    const eraAtual = eras[0], eraAnterior = eras[1];
+                    return { eras, eraAtual: eraAtual || null, eraAnterior: eraAnterior || null, mudancaDetectada: eraAtual && eraAnterior && eraAtual.digitoDominante !== eraAnterior.digitoDominante, digitoEmAscensao: eraAtual?.digitoDominante || null, digitoEmQueda: eraAnterior?.digitoDominante || null };
+                }
+                getMomentumDigito(turno, digito) { return this.momentumDigitos[turno]?.[digito] || null; }
+                getDigitosComMaiorMomentum(turno, limite = 5) { if (!this.momentumDigitos[turno]) return []; return Object.entries(this.momentumDigitos[turno]).sort((a, b) => b[1].momentum - a[1].momentum).slice(0, limite).map(([d, info]) => ({ digito: d, ...info })); }
+                getMigracoesRecentes(limite = 10) { return this.migracoesDetectadas.sort((a, b) => b.totalAparicoes - a.totalAparicoes).slice(0, limite); }
+            }
+
+            // ==================== ANÁLISE BÁSICA ====================
             function detectarPadroesNumero(numero) {
-                const padroes = [];
-                const d = numero.split('').map(Number);
-                
+                const padroes = [], d = numero.split('').map(Number);
                 if (d[0] === d[3] && d[1] === d[2]) padroes.push('ESPELHADO_ABBA');
                 if (d[0] === d[2] && d[1] !== d[3]) padroes.push('ESPELHADO_ABA');
-                
                 if (d[0] === d[1] && d[2] === d[3]) padroes.push('FORMATO_AABB');
                 if (d[0] === d[2] && d[1] === d[3]) padroes.push('FORMATO_ABAB');
                 if (d[0] === d[1] && d[0] === d[2] && d[0] === d[3]) padroes.push('QUADRA');
-                
-                const seqCrescente = d.every((val, idx) => idx === 0 || val === d[idx-1]+1);
-                const seqDecrescente = d.every((val, idx) => idx === 0 || val === d[idx-1]-1);
-                if (seqCrescente) padroes.push('SEQUENCIA_CRESCENTE');
-                if (seqDecrescente) padroes.push('SEQUENCIA_DECRESCENTE');
-                
-                const soma = d.reduce((a, b) => a + b, 0);
-                padroes.push(`SOMA_${soma}`);
-                
-                const final = numero.substring(2, 4);
-                padroes.push(`FINAL_${final}`);
-                
+                if (d.every((val, idx) => idx === 0 || val === d[idx-1]+1)) padroes.push('SEQUENCIA_CRESCENTE');
+                if (d.every((val, idx) => idx === 0 || val === d[idx-1]-1)) padroes.push('SEQUENCIA_DECRESCENTE');
+                padroes.push(`SOMA_${d.reduce((a, b) => a + b, 0)}`);
+                padroes.push(`FINAL_${numero.substring(2, 4)}`);
                 const digitosUnicos = new Set(d).size;
                 if (digitosUnicos === 1) padroes.push('QUATRO_IGUAIS');
                 if (digitosUnicos === 2) padroes.push('DOIS_PARES');
-                
                 return padroes;
             }
-            
+
             function analisarSorteio(sorteio) {
-                const analise = {
-                    numeros: sorteio,
-                    padroesIndividuais: {},
-                    casamentos: [],
-                    espelhamentos: [],
-                    formatosEspeciais: [],
-                    finais: [],
-                    somas: [],
-                    prefixos: [],
-                    centenas: []
-                };
-                
+                const analise = { numeros: sorteio, padroesIndividuais: {}, casamentos: [], espelhamentos: [], formatosEspeciais: [], finais: [], somas: [], prefixos: [], centenas: [] };
                 const prefixosCount = {};
-                
                 sorteio.forEach(num => {
                     analise.padroesIndividuais[num] = detectarPadroesNumero(num);
-                    
-                    const prefixo = num.substring(0, 2);
-                    const final = num.substring(2, 4);
-                    const centena = num.substring(1, 4);
-                    const soma = num.split('').reduce((a, b) => a + parseInt(b), 0);
-                    
-                    analise.finais.push(final);
-                    analise.somas.push(soma);
-                    analise.prefixos.push(prefixo);
-                    analise.centenas.push(centena);
-                    
+                    const prefixo = num.substring(0, 2), final = num.substring(2, 4), centena = num.substring(1, 4), soma = num.split('').reduce((a, b) => a + parseInt(b), 0);
+                    analise.finais.push(final); analise.somas.push(soma); analise.prefixos.push(prefixo); analise.centenas.push(centena);
                     prefixosCount[prefixo] = (prefixosCount[prefixo] || 0) + 1;
-                    
                     const padroes = analise.padroesIndividuais[num];
-                    if (padroes.includes('ESPELHADO_ABBA') || padroes.includes('ESPELHADO_ABA')) {
-                        analise.espelhamentos.push(num);
-                    }
-                    if (padroes.includes('FORMATO_AABB') || padroes.includes('FORMATO_ABAB')) {
-                        analise.formatosEspeciais.push(num);
-                    }
+                    if (padroes.includes('ESPELHADO_ABBA') || padroes.includes('ESPELHADO_ABA')) analise.espelhamentos.push(num);
+                    if (padroes.includes('FORMATO_AABB') || padroes.includes('FORMATO_ABAB')) analise.formatosEspeciais.push(num);
                 });
-                
-                for (const [prefixo, count] of Object.entries(prefixosCount)) {
-                    if (count > 1) {
-                        analise.casamentos.push({
-                            prefixo,
-                            numeros: sorteio.filter(n => n.startsWith(prefixo)),
-                            quantidade: count
-                        });
-                    }
-                }
-                
+                for (const [prefixo, count] of Object.entries(prefixosCount)) { if (count > 1) analise.casamentos.push({ prefixo, numeros: sorteio.filter(n => n.startsWith(prefixo)), quantidade: count }); }
                 return analise;
             }
-            
-            // ==================== FUNÇÃO CORRIGIDA - CORAÇÃO DO SISTEMA ====================
+
             function analisarHistoricoTurno(turno) {
                 const sorteios = dadosLotece[turno];
                 if (!sorteios) return null;
-                
-                // CRÍTICO: Inverter a ordem para que o primeiro seja o mais recente
                 const sorteiosInvertidos = [...sorteios].reverse();
-                
-                const historico = {
-                    totalSorteios: sorteios.length,
-                    analises: [],
-                    agregados: {
-                        padroesFrequencia: {},
-                        casamentosTotal: 0,
-                        espelhamentosTotal: 0,
-                        formatosTotal: 0,
-                        finaisFrequencia: {},
-                        prefixosFrequencia: {},
-                        centenasFrequencia: {},
-                        somasFrequencia: {},
-                        numerosFrequencia: {},
-                        ultimaAparicao: {},
-                        ultimaAparicaoCentena: {},
-                        ultimaAparicaoFinal: {},
-                        ultimaAparicaoPrefixo: {},
-                        ciclosDetectados: {},
-                        paresConsecutivos: {},
-                        deslocamentosHistoricos: {},
-                        familiasDigitos: {},
-                        taxaDeslocamentoPorTurno: {
-                            esquerda: 0,
-                            direita: 0,
-                            duplo: 0,
-                            total: 0
-                        }
-                    }
-                };
-                
-                // Agora processa na ordem invertida (mais recente primeiro)
+                const historico = { totalSorteios: sorteios.length, analises: [], agregados: { padroesFrequencia: {}, casamentosTotal: 0, espelhamentosTotal: 0, formatosTotal: 0, finaisFrequencia: {}, prefixosFrequencia: {}, centenasFrequencia: {}, somasFrequencia: {}, numerosFrequencia: {}, ultimaAparicao: {}, ultimaAparicaoCentena: {}, ultimaAparicaoFinal: {}, ultimaAparicaoPrefixo: {}, ciclosDetectados: {}, paresConsecutivos: {}, deslocamentosHistoricos: {}, familiasDigitos: {}, taxaDeslocamentoPorTurno: { esquerda: 0, direita: 0, duplo: 0, total: 0 } } };
                 sorteiosInvertidos.forEach((sorteio, idx) => {
-                    const analise = analisarSorteio(sorteio);
-                    historico.analises.push(analise);
-                    
+                    const analise = analisarSorteio(sorteio); historico.analises.push(analise);
                     sorteio.forEach(num => {
-                        historico.agregados.numerosFrequencia[num] = 
-                            (historico.agregados.numerosFrequencia[num] || 0) + 1;
-                        
-                        // IMPORTANTE: A última aparição agora é baseada na posição invertida
-                        // 0 = mais recente, 1 = segundo mais recente, etc.
+                        historico.agregados.numerosFrequencia[num] = (historico.agregados.numerosFrequencia[num] || 0) + 1;
                         historico.agregados.ultimaAparicao[num] = idx;
-                        
-                        analise.padroesIndividuais[num].forEach(padrao => {
-                            historico.agregados.padroesFrequencia[padrao] = 
-                                (historico.agregados.padroesFrequencia[padrao] || 0) + 1;
-                        });
-                        
-                        const centena = num.substring(1,4);
-                        historico.agregados.centenasFrequencia[centena] = 
-                            (historico.agregados.centenasFrequencia[centena] || 0) + 1;
-                        historico.agregados.ultimaAparicaoCentena[centena] = idx;
-
-                        const final = num.substring(2,4);
-                        const prefixo = num.substring(0,2);
-                        historico.agregados.ultimaAparicaoFinal[final] = idx;
-                        historico.agregados.ultimaAparicaoPrefixo[prefixo] = idx;
-                        
-                        num.split('').forEach(d => {
-                            historico.agregados.familiasDigitos[d] = 
-                                (historico.agregados.familiasDigitos[d] || 0) + 1;
-                        });
+                        analise.padroesIndividuais[num].forEach(p => { historico.agregados.padroesFrequencia[p] = (historico.agregados.padroesFrequencia[p] || 0) + 1; });
+                        const centena = num.substring(1,4); historico.agregados.centenasFrequencia[centena] = (historico.agregados.centenasFrequencia[centena] || 0) + 1; historico.agregados.ultimaAparicaoCentena[centena] = idx;
+                        const final = num.substring(2,4), prefixo = num.substring(0,2);
+                        historico.agregados.ultimaAparicaoFinal[final] = idx; historico.agregados.ultimaAparicaoPrefixo[prefixo] = idx;
+                        num.split('').forEach(d => { historico.agregados.familiasDigitos[d] = (historico.agregados.familiasDigitos[d] || 0) + 1; });
                     });
-                    
-                    // Análise de deslocamento (agora com ordem correta)
                     if (idx > 0) {
-                        const numAnterior = sorteiosInvertidos[idx-1][0];
-                        const numAtual = sorteio[0];
-                        
+                        const numAnterior = sorteiosInvertidos[idx-1][0], numAtual = sorteio[0];
                         if (numAnterior && numAtual && numAnterior.length === 4 && numAtual.length === 4) {
-                            const chavePar = `${numAnterior}->${numAtual}`;
-                            historico.agregados.paresConsecutivos[chavePar] = 
-                                (historico.agregados.paresConsecutivos[chavePar] || 0) + 1;
-                            
-                            if (numAtual === (numAnterior.substring(1,4) + numAnterior.substring(0,1))) {
-                                historico.agregados.deslocamentosHistoricos[numAnterior] = 
-                                    (historico.agregados.deslocamentosHistoricos[numAnterior] || 0) + 1;
-                                historico.agregados.taxaDeslocamentoPorTurno.esquerda++;
-                                historico.agregados.taxaDeslocamentoPorTurno.total++;
-                            }
-                            else if (numAtual === (numAnterior.substring(3,4) + numAnterior.substring(0,3))) {
-                                historico.agregados.deslocamentosHistoricos[numAnterior] = 
-                                    (historico.agregados.deslocamentosHistoricos[numAnterior] || 0) + 1;
-                                historico.agregados.taxaDeslocamentoPorTurno.direita++;
-                                historico.agregados.taxaDeslocamentoPorTurno.total++;
-                            }
-                            else if (numAtual === (numAnterior.substring(2,4) + numAnterior.substring(0,2))) {
-                                historico.agregados.deslocamentosHistoricos[numAnterior] = 
-                                    (historico.agregados.deslocamentosHistoricos[numAnterior] || 0) + 1;
-                                historico.agregados.taxaDeslocamentoPorTurno.duplo++;
-                                historico.agregados.taxaDeslocamentoPorTurno.total++;
-                            }
+                            historico.agregados.paresConsecutivos[`${numAnterior}->${numAtual}`] = (historico.agregados.paresConsecutivos[`${numAnterior}->${numAtual}`] || 0) + 1;
+                            if (numAtual === (numAnterior.substring(1,4) + numAnterior.substring(0,1))) { historico.agregados.deslocamentosHistoricos[numAnterior] = (historico.agregados.deslocamentosHistoricos[numAnterior] || 0) + 1; historico.agregados.taxaDeslocamentoPorTurno.esquerda++; historico.agregados.taxaDeslocamentoPorTurno.total++; }
+                            else if (numAtual === (numAnterior.substring(3,4) + numAnterior.substring(0,3))) { historico.agregados.deslocamentosHistoricos[numAnterior] = (historico.agregados.deslocamentosHistoricos[numAnterior] || 0) + 1; historico.agregados.taxaDeslocamentoPorTurno.direita++; historico.agregados.taxaDeslocamentoPorTurno.total++; }
+                            else if (numAtual === (numAnterior.substring(2,4) + numAnterior.substring(0,2))) { historico.agregados.deslocamentosHistoricos[numAnterior] = (historico.agregados.deslocamentosHistoricos[numAnterior] || 0) + 1; historico.agregados.taxaDeslocamentoPorTurno.duplo++; historico.agregados.taxaDeslocamentoPorTurno.total++; }
                         }
                     }
-                    
-                    if (analise.casamentos.length > 0) {
-                        historico.agregados.casamentosTotal += analise.casamentos.length;
-                    }
-                    
-                    historico.agregados.espelhamentosTotal += analise.espelhamentos.length;
-                    historico.agregados.formatosTotal += analise.formatosEspeciais.length;
-                    
-                    analise.finais.forEach(final => {
-                        historico.agregados.finaisFrequencia[final] = 
-                            (historico.agregados.finaisFrequencia[final] || 0) + 1;
-                    });
-                    
-                    analise.prefixos.forEach(prefixo => {
-                        historico.agregados.prefixosFrequencia[prefixo] = 
-                            (historico.agregados.prefixosFrequencia[prefixo] || 0) + 1;
-                    });
-                    
-                    analise.somas.forEach(soma => {
-                        historico.agregados.somasFrequencia[soma] = 
-                            (historico.agregados.somasFrequencia[soma] || 0) + 1;
-                    });
+                    if (analise.casamentos.length > 0) historico.agregados.casamentosTotal += analise.casamentos.length;
+                    historico.agregados.espelhamentosTotal += analise.espelhamentos.length; historico.agregados.formatosTotal += analise.formatosEspeciais.length;
+                    analise.finais.forEach(f => { historico.agregados.finaisFrequencia[f] = (historico.agregados.finaisFrequencia[f] || 0) + 1; });
+                    analise.prefixos.forEach(p => { historico.agregados.prefixosFrequencia[p] = (historico.agregados.prefixosFrequencia[p] || 0) + 1; });
+                    analise.somas.forEach(s => { historico.agregados.somasFrequencia[s] = (historico.agregados.somasFrequencia[s] || 0) + 1; });
                 });
-                
-                // Calcular atrasos (agora com índices corretos)
-                // O primeiro na lista invertida (índice 0) é o mais recente
-                for (const [num, ultimaVez] of Object.entries(historico.agregados.ultimaAparicao)) {
-                    historico.agregados.ciclosDetectados[num] = ultimaVez; // 0 = saiu no último sorteio
-                }
-                
+                for (const [num, ultimaVez] of Object.entries(historico.agregados.ultimaAparicao)) { historico.agregados.ciclosDetectados[num] = ultimaVez; }
                 return historico;
             }
-            
-            // ==================== FUNÇÃO APRENDER COM ACERTOS CORRIGIDA ====================
-            function aprenderComAcertos(historico) {
-                const acertosAnteriores = {};
-                
-                // Agora o índice 0 é o mais recente, índice 1 é o anterior, etc.
-                for (let i = 1; i < historico.analises.length; i++) {
-                    const numAnterior = historico.analises[i].numeros[0]; // Sorteio anterior
-                    const numAtual = historico.analises[i-1].numeros[0]; // Sorteio atual (mais recente)
-                    
-                    if (!numAnterior || !numAtual || numAnterior.length !== 4) continue;
-                    
-                    const possibilidades = new Set([
-                        numAnterior.substring(1,4) + numAnterior.substring(0,1),
-                        numAnterior.substring(3,4) + numAnterior.substring(0,3),
-                        numAnterior.substring(2,4) + numAnterior.substring(0,2)
-                    ]);
-                    
-                    if (possibilidades.has(numAtual)) {
-                        const chave = `${numAnterior}->${numAtual}`;
-                        acertosAnteriores[chave] = (acertosAnteriores[chave] || 0) + 1;
-                    }
-                }
-                
-                return acertosAnteriores;
-            }
-            
-            function calcularPesosPorTurno(historico, turno) {
-                const pesosPadrao = {
-                    'Manhã': { esquerda: 0.3, direita: 0.3, duplo: 0.2, repeticao: 0.2 },
-                    'Tarde': { esquerda: 0.25, direita: 0.35, duplo: 0.2, repeticao: 0.2 },
-                    'Tarde II': { esquerda: 0.4, direita: 0.2, duplo: 0.2, repeticao: 0.2 },
-                    'Noite': { esquerda: 0.3, direita: 0.3, duplo: 0.25, repeticao: 0.15 }
-                };
-                
-                if (!historico || historico.agregados.taxaDeslocamentoPorTurno.total < 5) {
-                    return pesosPadrao[turno] || pesosPadrao['Manhã'];
-                }
-                
-                const taxas = historico.agregados.taxaDeslocamentoPorTurno;
-                const total = taxas.total || 1;
-                
-                return {
-                    esquerda: taxas.esquerda / total,
-                    direita: taxas.direita / total,
-                    duplo: taxas.duplo / total,
-                    repeticao: 0.2
-                };
-            }
-            
-            // ==================== FUNÇÃO PREVER DESLOCAMENTO CORRIGIDA ====================
-            function preverDeslocamentoCircular(turno) {
-                const historico = analisarHistoricoTurno(turno);
-                if (!historico || historico.totalSorteios < 2) return [];
-                
-                const acertosAnteriores = aprenderComAcertos(historico);
-                const pesos = calcularPesosPorTurno(historico, turno);
-                // Agora pega os primeiros da lista (mais recentes)
-                const ultimosSorteios = historico.analises.slice(0, 3);
-                const previsoes = new Map();
-                
-                ultimosSorteios.forEach((sorteio, idx) => {
-                    const atraso = idx + 1; // 1 = mais recente, 2 = segundo mais recente, etc.
-                    const pesoAtraso = atraso === 1 ? 1.0 : atraso === 2 ? 0.6 : 0.3;
-                    
-                    if (!sorteio || !sorteio.numeros || sorteio.numeros.length === 0) return;
-                    
-                    const numerosPrincipais = sorteio.numeros.slice(0, 3);
-                    
-                    numerosPrincipais.forEach(num => {
-                        if (num.length !== 4) return;
-                        
-                        const deslocamentos = [
-                            { valor: num.substring(1,4) + num.substring(0,1), tipo: 'esquerda', pesoBase: pesos.esquerda },
-                            { valor: num.substring(3,4) + num.substring(0,3), tipo: 'direita', pesoBase: pesos.direita },
-                            { valor: num.substring(2,4) + num.substring(0,2), tipo: 'duplo', pesoBase: pesos.duplo }
-                        ];
-                        
-                        deslocamentos.forEach(desc => {
-                            let score = desc.pesoBase * pesoAtraso * 100;
-                            
-                            const chaveAcerto = `${num}->${desc.valor}`;
-                            if (acertosAnteriores[chaveAcerto]) {
-                                score += acertosAnteriores[chaveAcerto] * 50;
-                            }
-                            
-                            const padroes = detectarPadroesNumero(desc.valor);
-                            if (padroes.includes('ESPELHADO_ABBA') || padroes.includes('ESPELHADO_ABA')) score += 15;
-                            if (padroes.includes('FORMATO_AABB') || padroes.includes('FORMATO_ABAB')) score += 10;
-                            
-                            const freq = historico.agregados.numerosFrequencia[desc.valor] || 0;
-                            score += freq * 3;
-                            
-                            const ultimaVez = historico.agregados.ultimaAparicao[desc.valor];
-                            if (ultimaVez !== undefined) {
-                                const atrasoNum = ultimaVez; // Agora é direto (0 = mais recente)
-                                if (atrasoNum >= 7 && atrasoNum <= 14) score += 25;
-                                else if (atrasoNum > 14) score += 10;
-                            } else {
-                                score += 20;
-                            }
-                            
-                            const pontuacaoAtual = previsoes.get(desc.valor) || 0;
-                            previsoes.set(desc.valor, pontuacaoAtual + score);
-                        });
-                    });
-                });
-                
-                // Usar o mais recente para variações
-                if (ultimosSorteios.length > 0) {
-                    const ultimo = ultimosSorteios[0]; // Primeiro = mais recente
-                    if (ultimo && ultimo.numeros[0]) {
-                        const num = ultimo.numeros[0];
-                        if (num.length === 4) {
-                            const base = num.substring(1, 4);
-                            for (let i = 0; i <= 9; i++) {
-                                const variacao = i + base;
-                                const score = previsoes.get(variacao) || 0;
-                                previsoes.set(variacao, score + 15);
-                            }
-                        }
-                    }
-                }
-                
-                const previsoesArray = Array.from(previsoes.entries())
-                    .map(([numero, score]) => ({ numero, score }))
-                    .sort((a, b) => b.score - a.score)
-                    .slice(0, 10)
-                    .map(item => item.numero);
-                
-                return previsoesArray;
-            }
-            
-            function preverProximoSorteio(turno) {
-                const historico = analisarHistoricoTurno(turno);
-                if (!historico) return null;
-                
-                const previsao = {
-                    estrategiasAtivas: [],
-                    prefixosProvaveis: [],
-                    finaisProvaveis: [],
-                    numerosProvaveis: [],
-                    padroesEsperados: [],
-                    alertas: []
-                };
-                
-                const ultimos5Sorteios = historico.analises.slice(0, 5); // Agora pega os primeiros (mais recentes)
-                const frequencia = historico.agregados;
-                
-                const estrategias = { ESPELHAMENTO:0, CASAMENTO:0, FORMATO_ESPECIAL:0, SEQUENCIA:0, FINAL_DOMINANTE:0 };
-                
-                ultimos5Sorteios.forEach(analise => {
-                    if (analise.espelhamentos.length > 0) estrategias.ESPELHAMENTO++;
-                    if (analise.casamentos.length > 0) estrategias.CASAMENTO++;
-                    if (analise.formatosEspeciais.length > 0) estrategias.FORMATO_ESPECIAL++;
-                    
-                    analise.numeros.forEach(num => {
-                        if (detectarPadroesNumero(num).includes('SEQUENCIA_CRESCENTE') || 
-                            detectarPadroesNumero(num).includes('SEQUENCIA_DECRESCENTE')) {
-                            estrategias.SEQUENCIA++;
-                        }
-                    });
-                });
-                
-                for (const [estrategia, count] of Object.entries(estrategias)) {
-                    if (count >= 3) {
-                        previsao.estrategiasAtivas.push(estrategia);
-                    }
-                }
-                
-                const prefixosUltimos10 = {};
-                historico.analises.slice(0, 10).forEach(analise => {
-                    analise.prefixos.forEach(p => {
-                        prefixosUltimos10[p] = (prefixosUltimos10[p] || 0) + 1;
-                    });
-                });
-                
-                previsao.prefixosProvaveis = Object.entries(prefixosUltimos10)
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 10)
-                    .map(p => p[0]);
-                
-                const finaisUltimos10 = {};
-                historico.analises.slice(0, 10).forEach(analise => {
-                    analise.finais.forEach(f => {
-                        finaisUltimos10[f] = (finaisUltimos10[f] || 0) + 1;
-                    });
-                });
-                
-                previsao.finaisProvaveis = Object.entries(finaisUltimos10)
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 10)
-                    .map(f => f[0]);
-                
-                const atrasados = Object.entries(frequencia.ciclosDetectados)
-                    .filter(([num, atraso]) => atraso > 15)
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 10)
-                    .map(([num, atraso]) => ({ numero: num, atraso }));
-                
-                previsao.numerosProvaveis = atrasados;
-                
-                if (estrategias.ESPELHAMENTO >= 3) {
-                    previsao.padroesEsperados.push('Números espelhados (ABBA, ABA)');
-                }
-                if (estrategias.CASAMENTO >= 3) {
-                    previsao.padroesEsperados.push('Casamento de prefixos');
-                }
-                if (estrategias.FORMATO_ESPECIAL >= 3) {
-                    previsao.padroesEsperados.push('Formatos AABB ou ABAB');
-                }
-                
-                const finaisAtrasados = Object.entries(frequencia.finaisFrequencia)
-                    .filter(([final, freq]) => {
-                        const ultimoIdx = historico.analises.findIndex(a => a.finais.includes(final));
-                        return ultimoIdx > 5;
-                    })
-                    .sort((a, b) => {
-                        const atrasoA = historico.analises.findIndex(ana => ana.finais.includes(a[0]));
-                        const atrasoB = historico.analises.findIndex(ana => ana.finais.includes(b[0]));
-                        return atrasoB - atrasoA;
-                    })
-                    .slice(0, 10);
-                
-                finaisAtrasados.forEach(([final]) => {
-                    previsao.alertas.push(`Final ${final} atrasado`);
-                });
-                
-                return previsao;
-            }
-            
-            function gerarSugestoesInteligentes(turno) {
-                const previsao = preverProximoSorteio(turno);
-                const historico = analisarHistoricoTurno(turno);
-                if (!previsao || !historico) return null;
-                
-                const sugestoes = { milharesFortes: [], dezenasQuentes: [], prefixosRecomendados: [], estrategias: [] };
-                
-                previsao.prefixosProvaveis.slice(0, 5).forEach(prefixo => {
-                    previsao.finaisProvaveis.slice(0, 5).forEach(final => {
-                        sugestoes.milharesFortes.push(prefixo + final);
-                    });
-                });
-                sugestoes.milharesFortes = sugestoes.milharesFortes.slice(0, 10);
-                
-                const dezenasRecentes = [];
-                historico.analises.slice(0, 10).forEach(analise => {
-                    analise.finais.forEach(final => dezenasRecentes.push(final));
-                });
-                const frequenciaDezenas = {};
-                dezenasRecentes.forEach(d => frequenciaDezenas[d] = (frequenciaDezenas[d] || 0) + 1);
-                sugestoes.dezenasQuentes = Object.entries(frequenciaDezenas)
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 10)
-                    .map(d => d[0]);
-                
-                const prefixosAtrasados = Object.entries(historico.agregados.prefixosFrequencia)
-                    .filter(([p, freq]) => {
-                        const ultimoIdx = historico.analises.findIndex(a => a.prefixos.includes(p));
-                        return ultimoIdx > 8;
-                    })
-                    .slice(0, 5)
-                    .map(p => p[0]);
-                
-                sugestoes.prefixosRecomendados = [...new Set([
-                    ...previsao.prefixosProvaveis.slice(0, 5),
-                    ...prefixosAtrasados
-                ])].slice(0, 10);
-                
-                if (previsao.estrategiasAtivas.includes('ESPELHAMENTO')) {
-                    sugestoes.estrategias.push('Focar em números espelhados (ex: 5885, 8228)');
-                }
-                if (previsao.estrategiasAtivas.includes('CASAMENTO')) {
-                    sugestoes.estrategias.push('Apostar em pares com mesmo prefixo');
-                }
-                if (previsao.estrategiasAtivas.includes('FORMATO_ESPECIAL')) {
-                    sugestoes.estrategias.push('Priorizar formatos AABB/ABAB');
-                }
-                if (previsao.estrategiasAtivas.includes('SEQUENCIA')) {
-                    sugestoes.estrategias.push('Buscar sequências crescentes/decrescentes');
-                }
-                if (previsao.estrategiasAtivas.length === 0) {
-                    sugestoes.estrategias.push('Sorteio balanceado - diversificar apostas');
-                }
-                
-                return sugestoes;
-            }
-            
-            function obterCentenasData(turno) {
-                const historico = analisarHistoricoTurno(turno);
-                if (!historico) return null;
 
-                const frequenciaCentenas = historico.agregados.centenasFrequencia;
-
-                const quentes = Object.entries(frequenciaCentenas)
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 10)
-                    .map(c => c[0]);
-
-                const todasCentenas = Array.from({ length: 1000 }, (_, i) => i.toString().padStart(3, '0'));
-                const frequenciaMap = new Map(Object.entries(frequenciaCentenas));
-                const frias = todasCentenas
-                    .filter(c => !frequenciaMap.has(c))
-                    .concat(Object.entries(frequenciaCentenas).filter(([c, f]) => f === 1).map(e => e[0]))
-                    .slice(0, 10);
-                if (frias.length < 10) {
-                    const restantes = Object.entries(frequenciaCentenas)
-                        .filter(([c, f]) => !frias.includes(c))
-                        .sort((a, b) => a[1] - b[1])
-                        .slice(0, 10 - frias.length)
-                        .map(e => e[0]);
-                    frias.push(...restantes);
-                }
-
-                const probabilisticas = Object.entries(frequenciaCentenas)
-                    .map(([cent, freq]) => {
-                        const atraso = historico.agregados.ultimaAparicaoCentena[cent] || 0;
-                        const score = (freq * 2) + (atraso * 3);
-                        return { cent, score };
-                    })
-                    .sort((a, b) => b.score - a.score)
-                    .slice(0, 10)
-                    .map(item => item.cent);
-
-                return { quentes, frias, probabilisticas };
-            }
-            
-            // ===== NOVAS FUNÇÕES DE PREVISÃO COM ML =====
-            
-            // Função 1: Previsão com Machine Learning Simples (CORRIGIDA)
-            function preverProximosNumerosComML(turno) {
-                const historico = analisarHistoricoTurno(turno);
-                if (!historico || historico.totalSorteios < 10) return [];
-                
-                const scores = new Map();
-                
-                // Pega todos os números que já apareceram
-                const todosNumeros = new Set();
-                historico.analises.forEach(analise => {
-                    analise.numeros.forEach(num => todosNumeros.add(num));
-                });
-                
-                // Se tiver menos de 100 números únicos, adiciona números comuns
-                if (todosNumeros.size < 100) {
-                    for (let i = 0; i <= 999; i++) {
-                        todosNumeros.add(i.toString().padStart(4, '0'));
-                    }
-                }
-                
-                // Calcula scores baseados em múltiplos fatores
+            // ==================== GERAÇÃO DE VALORES PROBABILÍSTICOS ====================
+            function gerarMilharesProbabilisticos(turno, crossAnalise, aleatorio, limite = 20) {
+                const historico = analisarHistoricoTurno(turno); if (!historico) return [];
+                const scores = new Map(), todosNumeros = new Set();
+                historico.analises.forEach(a => a.numeros.forEach(n => todosNumeros.add(n)));
+                if (todosNumeros.size < 500) { for (let i = 0; i <= 9999; i++) todosNumeros.add(i.toString().padStart(4, '0')); }
                 todosNumeros.forEach(numero => {
                     let score = 0;
-                    
-                    // Fator 1: Frequência histórica (peso 1)
-                    const frequencia = historico.agregados.numerosFrequencia[numero] || 0;
-                    score += frequencia * 10;
-                    
-                    // Fator 2: Atraso (peso 3 - mais importante) - CORRIGIDO
-                    const ultimaVez = historico.agregados.ultimaAparicao[numero];
-                    if (ultimaVez !== undefined) {
-                        const atraso = ultimaVez; // Agora 0 = mais recente, quanto maior, mais atrasado
-                        score += atraso * 30;
-                    } else {
-                        score += 500; // Nunca saiu - prioridade média
-                    }
-                    
-                    // Fator 3: Padrões especiais
+                    score += (historico.agregados.numerosFrequencia[numero] || 0) * 15;
+                    const ultimaVez = historico.agregados.ultimaAparicao[numero]; score += ultimaVez !== undefined ? ultimaVez * 25 : 400;
                     const padroes = detectarPadroesNumero(numero);
-                    if (padroes.includes('ESPELHADO_ABBA') || padroes.includes('ESPELHADO_ABA')) {
-                        score += 50;
-                    }
-                    if (padroes.includes('FORMATO_AABB') || padroes.includes('FORMATO_ABAB')) {
-                        score += 30;
-                    }
-                    if (padroes.includes('SEQUENCIA_CRESCENTE') || padroes.includes('SEQUENCIA_DECRESCENTE')) {
-                        score += 40;
-                    }
-                    
-                    // Fator 4: Tendência de deslocamento nos últimos sorteios
-                    const ultimosSorteios = historico.analises.slice(0, 5);
-                    const ultimoNumero = ultimosSorteios[0]?.numeros[0];
-                    if (ultimoNumero) {
-                        const deslocamentos = [
-                            ultimoNumero.substring(1,4) + ultimoNumero.substring(0,1),
-                            ultimoNumero.substring(3,4) + ultimoNumero.substring(0,3),
-                            ultimoNumero.substring(2,4) + ultimoNumero.substring(0,2)
-                        ];
-                        if (deslocamentos.includes(numero)) {
-                            score += 80;
-                        }
-                    }
-                    
-                    // Fator 5: Repetição de padrões recentes
-                    historico.analises.slice(0, 5).forEach(sorteio => {
-                        sorteio.numeros.forEach(num => {
-                            if (numero.endsWith(num.substring(2,4))) {
-                                score += 5; // Mesmo final
-                            }
-                            if (numero.startsWith(num.substring(0,2))) {
-                                score += 5; // Mesmo prefixo
-                            }
-                            if (detectarPadroesNumero(numero).some(p => 
-                                detectarPadroesNumero(num).includes(p) && p.includes('SOMA'))) {
-                                score += 10; // Mesma soma
-                            }
-                        });
-                    });
-                    
-                    scores.set(numero, score);
+                    if (padroes.includes('ESPELHADO_ABBA') || padroes.includes('ESPELHADO_ABA')) score += 40;
+                    if (padroes.includes('FORMATO_AABB') || padroes.includes('FORMATO_ABAB')) score += 30;
+                    if (crossAnalise) { const digito = numero[0]; const momentum = crossAnalise.getMomentumDigito(turno, digito); if (momentum && momentum.momentum > 20) score += 50; if (momentum && momentum.status === 'up') score += 30; }
+                    score += aleatorio.proximo(-20, 20); scores.set(numero, score);
                 });
-                
-                // Ordena e retorna os top 20
-                return Array.from(scores.entries())
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 20)
-                    .map(item => item[0]);
-            }
-            
-            // Função 2: Previsão por Padrão Temporal (CORRIGIDA)
-            function preverPorPadraoTemporal(turno) {
-                const historico = analisarHistoricoTurno(turno);
-                if (!historico || historico.totalSorteios < 15) return [];
-                
-                const scores = new Map();
-                const ultimos15 = historico.analises.slice(0, 15);
-                
-                // Analisa ciclos de repetição
-                for (let i = 0; i < ultimos15.length - 1; i++) {
-                    const sorteioAtual = ultimos15[i];
-                    const proximoSorteio = ultimos15[i + 1];
-                    
-                    sorteioAtual.numeros.forEach(numAtual => {
-                        proximoSorteio.numeros.forEach(numProx => {
-                            // Se houve deslocamento
-                            if (numProx === (numAtual.substring(1,4) + numAtual.substring(0,1)) ||
-                                numProx === (numAtual.substring(3,4) + numAtual.substring(0,3)) ||
-                                numProx === (numAtual.substring(2,4) + numAtual.substring(0,2))) {
-                                
-                                const chave = `${numAtual}->${numProx}`;
-                                scores.set(chave, (scores.get(chave) || 0) + 1);
-                            }
-                            
-                            // Se repetiu o número
-                            if (numProx === numAtual) {
-                                scores.set(numProx, (scores.get(numProx) || 0) + 3);
-                            }
-                            
-                            // Se tem mesmo final
-                            if (numProx.substring(2,4) === numAtual.substring(2,4)) {
-                                scores.set(numProx, (scores.get(numProx) || 0) + 1);
-                            }
-                            
-                            // Se tem mesmo prefixo
-                            if (numProx.substring(0,2) === numAtual.substring(0,2)) {
-                                scores.set(numProx, (scores.get(numProx) || 0) + 1);
-                            }
-                        });
-                    });
-                }
-                
-                // Aplica ao último sorteio
-                const ultimoSorteio = ultimos15[0];
-                const previsoes = new Set();
-                
-                ultimoSorteio.numeros.forEach(num => {
-                    // Gera deslocamentos
-                    const deslocamentos = [
-                        num.substring(1,4) + num.substring(0,1),
-                        num.substring(3,4) + num.substring(0,3),
-                        num.substring(2,4) + num.substring(0,2)
-                    ];
-                    
-                    deslocamentos.forEach(desc => {
-                        const peso = scores.get(`${num}->${desc}`) || 0;
-                        if (peso > 0) {
-                            for (let i = 0; i < peso; i++) previsoes.add(desc);
-                        } else {
-                            previsoes.add(desc);
-                        }
-                    });
-                    
-                    // Adiciona variações do número
-                    const prefixo = num.substring(0,2);
-                    const final = num.substring(2,4);
-                    for (let i = 0; i <= 9; i++) {
-                        previsoes.add(prefixo + i.toString().padStart(2, '0'));
-                        previsoes.add(i.toString().padStart(2, '0') + final);
-                    }
-                    
-                    // Adiciona números com mesmo padrão
-                    const padroes = detectarPadroesNumero(num);
-                    historico.analises.forEach(analise => {
-                        analise.numeros.forEach(n => {
-                            const p = detectarPadroesNumero(n);
-                            if (padroes.some(pad => p.includes(pad))) {
-                                previsoes.add(n);
-                            }
-                        });
-                    });
-                });
-                
-                return Array.from(previsoes).slice(0, 20);
-            }
-            
-            // Função 3: Previsão por Análise de Dígitos (melhorada)
-            function preverPorDigitoMelhorado(turno) {
-                const historico = analisarHistoricoTurno(turno);
-                if (!historico || historico.totalSorteios < 5) return [];
-                
-                // Analisa frequência por posição nos últimos 20 sorteios
-                const frequenciaPos = {
-                    0: {}, 1: {}, 2: {}, 3: {}
-                };
-                
-                const ultimos20 = historico.analises.slice(0, 20);
-                ultimos20.forEach(analise => {
-                    analise.numeros.forEach(num => {
-                        if (num.length === 4) {
-                            for (let pos = 0; pos < 4; pos++) {
-                                const digito = num[pos];
-                                frequenciaPos[pos][digito] = (frequenciaPos[pos][digito] || 0) + 1;
-                            }
-                        }
-                    });
-                });
-                
-                // Calcula dígitos mais prováveis por posição
-                const digitosProvaveis = {};
-                for (let pos = 0; pos < 4; pos++) {
-                    digitosProvaveis[pos] = Object.entries(frequenciaPos[pos])
-                        .sort((a, b) => b[1] - a[1])
-                        .slice(0, 4)
-                        .map(item => item[0]);
-                }
-                
-                // Gera combinações
-                const previsoes = new Set();
-                
-                for (let a of digitosProvaveis[0]) {
-                    for (let b of digitosProvaveis[1]) {
-                        for (let c of digitosProvaveis[2]) {
-                            for (let d of digitosProvaveis[3]) {
-                                previsoes.add(a + b + c + d);
-                            }
-                        }
-                    }
-                }
-                
-                return Array.from(previsoes).slice(0, 20);
-            }
-            
-            // Função 4: Função principal de previsão combinada
-            function gerarPrevisoesCompletas(turno) {
-                const historico = analisarHistoricoTurno(turno);
-                if (!historico) return [];
-                
-                console.log(`Gerando previsões para ${turno} com ${historico.totalSorteios} sorteios`);
-                
-                // 1. Previsão ML
-                const mlPrevisoes = preverProximosNumerosComML(turno);
-                
-                // 2. Previsão Temporal
-                const temporalPrevisoes = preverPorPadraoTemporal(turno);
-                
-                // 3. Previsão por Dígito
-                const digitoPrevisoes = preverPorDigitoMelhorado(turno);
-                
-                // 4. Previsão por Deslocamento (existente)
-                const deslocamentoPrevisoes = preverDeslocamentoCircular(turno);
-                
-                // 5. Combina e pontua todas as previsões
-                const scores = new Map();
-                
-                const adicionarComPeso = (lista, peso) => {
-                    lista.forEach((num, idx) => {
-                        const scoreAtual = scores.get(num) || 0;
-                        // Posição na lista também influencia
-                        const posBonus = Math.max(0, 20 - idx);
-                        scores.set(num, scoreAtual + peso + posBonus);
-                    });
-                };
-                
-                adicionarComPeso(mlPrevisoes, 100);
-                adicionarComPeso(temporalPrevisoes, 80);
-                adicionarComPeso(digitoPrevisoes, 60);
-                adicionarComPeso(deslocamentoPrevisoes, 70);
-                
-                // 6. Adiciona números quentes
-                const quentes = Object.entries(historico.agregados.numerosFrequencia)
-                    .sort((a,b) => b[1] - a[1])
-                    .slice(0, 15)
-                    .map(n => n[0]);
-                adicionarComPeso(quentes, 40);
-                
-                // 7. Adiciona números atrasados (CORRIGIDO)
-                const atrasados = Object.entries(historico.agregados.ciclosDetectados)
-                    .sort((a,b) => b[1] - a[1])
-                    .slice(0, 15)
-                    .map(n => n[0]);
-                adicionarComPeso(atrasados, 90); // Peso alto para atrasados
-                
-                // 8. Adiciona números que nunca saíram
-                const todosNumerosPossiveis = Array.from({ length: 10000 }, (_, i) => i.toString().padStart(4, '0'));
-                const numerosNuncaVistos = todosNumerosPossiveis.filter(n => !historico.agregados.numerosFrequencia[n]);
-                adicionarComPeso(numerosNuncaVistos.slice(0, 20), 50);
-                
-                // Ordena por score e retorna top 20
-                return Array.from(scores.entries())
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 20)
-                    .map(item => item[0]);
-            }
-            
-            // ===== FUNÇÃO DE ANÁLISE DO ÚLTIMO SORTEIO (CORRIGIDA) =====
-            function analisarUltimoSorteioEProjetar(turno) {
-                const historico = analisarHistoricoTurno(turno);
-                if (!historico || historico.totalSorteios < 3) return null;
-                
-                // Pega os últimos 3 sorteios (primeiros da lista)
-                const ultimos3 = historico.analises.slice(0, 3);
-                const ultimo = ultimos3[0]; // Mais recente
-                const penultimo = ultimos3[1]; // Segundo mais recente
-                
-                // Pega os 5 primeiros prêmios do último sorteio
-                const numerosUltimo = ultimo.numeros.slice(0, 5);
-                
-                // Analisa os padrões presentes no último sorteio
-                const padroesUltimo = {
-                    deslocamentos: [],
-                    espelhados: [],
-                    formatosEspeciais: [],
-                    familiasDezenas: {},
-                    familiasPrefixos: {},
-                    repeticoes: []
-                };
-                
-                // 1. Identifica espelhados no último sorteio
-                numerosUltimo.forEach(num => {
-                    const padroes = detectarPadroesNumero(num);
-                    if (padroes.includes('ESPELHADO_ABBA') || padroes.includes('ESPELHADO_ABA')) {
-                        padroesUltimo.espelhados.push(num);
-                    }
-                    if (padroes.includes('FORMATO_AABB') || padroes.includes('FORMATO_ABAB')) {
-                        padroesUltimo.formatosEspeciais.push(num);
-                    }
-                });
-                
-                // 2. Identifica famílias de dezenas no último sorteio
-                const dezenasCount = {};
-                numerosUltimo.forEach(num => {
-                    const dezena = num.substring(2,4);
-                    dezenasCount[dezena] = (dezenasCount[dezena] || 0) + 1;
-                });
-                
-                Object.entries(dezenasCount).forEach(([dezena, count]) => {
-                    if (count >= 2) {
-                        padroesUltimo.familiasDezenas[dezena] = count;
-                    }
-                });
-                
-                // 3. Identifica famílias de prefixos no último sorteio
-                const prefixosCount = {};
-                numerosUltimo.forEach(num => {
-                    const prefixo = num.substring(0,2);
-                    prefixosCount[prefixo] = (prefixosCount[prefixo] || 0) + 1;
-                });
-                
-                Object.entries(prefixosCount).forEach(([prefixo, count]) => {
-                    if (count >= 2) {
-                        padroesUltimo.familiasPrefixos[prefixo] = count;
-                    }
-                });
-                
-                // 4. Verifica deslocamento em relação ao penúltimo sorteio
-                if (penultimo && penultimo.numeros[0]) {
-                    const numPenultimo = penultimo.numeros[0];
-                    numerosUltimo.forEach(num => {
-                        if (num === (numPenultimo.substring(1,4) + numPenultimo.substring(0,1))) {
-                            padroesUltimo.deslocamentos.push({
-                                tipo: 'esquerda',
-                                origem: numPenultimo,
-                                destino: num
-                            });
-                        }
-                        if (num === (numPenultimo.substring(3,4) + numPenultimo.substring(0,3))) {
-                            padroesUltimo.deslocamentos.push({
-                                tipo: 'direita',
-                                origem: numPenultimo,
-                                destino: num
-                            });
-                        }
-                        if (num === (numPenultimo.substring(2,4) + numPenultimo.substring(0,2))) {
-                            padroesUltimo.deslocamentos.push({
-                                tipo: 'duplo',
-                                origem: numPenultimo,
-                                destino: num
-                            });
-                        }
-                    });
-                }
-                
-                // 5. Gera projeções baseadas nos padrões identificados
-                const projecoes = [];
-                
-                // Se identificou espelhados, projeta espelhos
-                if (padroesUltimo.espelhados.length > 0) {
-                    padroesUltimo.espelhados.forEach(num => {
-                        const espelho = num[3] + num[2] + num[1] + num[0];
-                        projecoes.push({
-                            numero: espelho,
-                            baseado_em: 'espelho',
-                            origem: num
-                        });
-                    });
-                }
-                
-                // Se identificou formatos especiais, projeta variações
-                if (padroesUltimo.formatosEspeciais.length > 0) {
-                    padroesUltimo.formatosEspeciais.forEach(num => {
-                        const d = num.split('');
-                        const aabb = d[0] + d[0] + d[2] + d[2];
-                        const abab = d[0] + d[2] + d[0] + d[2];
-                        
-                        projecoes.push({
-                            numero: aabb,
-                            baseado_em: 'formato_AABB',
-                            origem: num
-                        });
-                        projecoes.push({
-                            numero: abab,
-                            baseado_em: 'formato_ABAB',
-                            origem: num
-                        });
-                    });
-                }
-                
-                // Se identificou famílias de dezenas, projeta mais números com essa dezena
-                Object.keys(padroesUltimo.familiasDezenas).forEach(dezena => {
-                    const prefixosTop = Object.entries(historico.agregados.prefixosFrequencia)
-                        .sort((a,b) => b[1] - a[1])
-                        .slice(0, 3)
-                        .map(p => p[0]);
-                    
-                    prefixosTop.forEach(prefixo => {
-                        projecoes.push({
-                            numero: prefixo + dezena,
-                            baseado_em: 'familia_dezena',
-                            origem: dezena
-                        });
-                    });
-                });
-                
-                // Se identificou famílias de prefixos, projeta mais números com esse prefixo
-                Object.keys(padroesUltimo.familiasPrefixos).forEach(prefixo => {
-                    const dezenasTop = Object.entries(historico.agregados.finaisFrequencia)
-                        .sort((a,b) => b[1] - a[1])
-                        .slice(0, 3)
-                        .map(f => f[0]);
-                    
-                    dezenasTop.forEach(dezena => {
-                        projecoes.push({
-                            numero: prefixo + dezena,
-                            baseado_em: 'familia_prefixo',
-                            origem: prefixo
-                        });
-                    });
-                });
-                
-                // Se identificou deslocamentos, projeta continuidade do padrão
-                if (padroesUltimo.deslocamentos.length > 0) {
-                    padroesUltimo.deslocamentos.forEach(desc => {
-                        if (desc.tipo === 'esquerda') {
-                            const proximo = desc.destino.substring(1,4) + desc.destino.substring(0,1);
-                            projecoes.push({
-                                numero: proximo,
-                                baseado_em: 'continuidade_deslocamento',
-                                origem: desc.destino
-                            });
-                        }
-                    });
-                }
-                
-                // Remove duplicatas e pega os 10 mais relevantes
-                const projecoesUnicas = [];
-                const vistos = new Set();
-                
-                projecoes.forEach(p => {
-                    if (!vistos.has(p.numero) && p.numero.length === 4) {
-                        vistos.add(p.numero);
-                        projecoesUnicas.push(p);
-                    }
-                });
-                
-                return {
-                    ultimo_sorteio: numerosUltimo,
-                    padroes_identificados: padroesUltimo,
-                    projecoes: projecoesUnicas.slice(0, 10)
-                };
+                return Array.from(scores.entries()).sort((a, b) => b[1] - a[1]).slice(0, limite).map(i => i[0]);
             }
 
-            // ==================== FUNÇÃO DE DEPURAÇÃO ====================
-            function debugOrdenacao(turno) {
-                const historico = analisarHistoricoTurno(turno);
-                console.log(`=== DEBUG ${turno} ===`);
-                console.log(`Total de sorteios: ${historico.totalSorteios}`);
-                console.log(`Primeiro sorteio (mais recente): ${historico.analises[0].numeros[0]}`);
-                console.log(`Segundo sorteio: ${historico.analises[1].numeros[0]}`);
-                console.log(`Último sorteio (mais antigo): ${historico.analises[historico.analises.length-1].numeros[0]}`);
+            function gerarCentenasProbabilisticas(turno, crossAnalise, aleatorio, limite = 20) {
+                const historico = analisarHistoricoTurno(turno); if (!historico) return [];
+                const scores = new Map(), todasCentenas = new Set();
+                historico.analises.forEach(a => a.centenas.forEach(c => todasCentenas.add(c)));
+                if (todasCentenas.size < 100) { for (let i = 0; i <= 999; i++) todasCentenas.add(i.toString().padStart(3, '0')); }
+                todasCentenas.forEach(centena => {
+                    let score = 0;
+                    score += (historico.agregados.centenasFrequencia[centena] || 0) * 20;
+                    const ultimaVez = historico.agregados.ultimaAparicaoCentena[centena]; score += ultimaVez !== undefined ? ultimaVez * 30 : 500;
+                    if (crossAnalise) { const digito = centena[0]; const momentum = crossAnalise.getMomentumDigito(turno, digito); if (momentum && momentum.momentum > 15) score += 45; }
+                    score += aleatorio.proximo(-15, 15); scores.set(centena, score);
+                });
+                return Array.from(scores.entries()).sort((a, b) => b[1] - a[1]).slice(0, limite).map(i => i[0]);
+            }
+
+            function gerarDezenasProbabilisticas(turno, crossAnalise, aleatorio, limite = 20) {
+                const historico = analisarHistoricoTurno(turno); if (!historico) return [];
+                const scores = new Map(), todasDezenas = new Set();
+                historico.analises.forEach(a => a.finais.forEach(f => todasDezenas.add(f)));
+                if (todasDezenas.size < 50) { for (let i = 0; i <= 99; i++) todasDezenas.add(i.toString().padStart(2, '0')); }
+                todasDezenas.forEach(dezena => {
+                    let score = 0;
+                    score += (historico.agregados.finaisFrequencia[dezena] || 0) * 25;
+                    const ultimaVez = historico.agregados.ultimaAparicaoFinal[dezena]; score += ultimaVez !== undefined ? ultimaVez * 35 : 600;
+                    if (crossAnalise) { const digito = dezena[0]; const momentum = crossAnalise.getMomentumDigito(turno, digito); if (momentum && momentum.momentum > 10) score += 35; }
+                    score += aleatorio.proximo(-10, 10); scores.set(dezena, score);
+                });
+                return Array.from(scores.entries()).sort((a, b) => b[1] - a[1]).slice(0, limite).map(i => i[0]);
+            }
+
+            function gerarPrevisoesCompletasCrossTurno(turno, aleatorio, crossAnalise) {
+                const historico = analisarHistoricoTurno(turno); if (!historico) return [];
+                const scores = new Map();
+                const adicionarComPeso = (lista, peso) => { lista.forEach((num, idx) => { const scoreAtual = scores.get(num) || 0; scores.set(num, scoreAtual + peso + Math.max(0, 20 - idx) + aleatorio.proximo(-5, 5)); }); };
+                adicionarComPeso(Object.entries(historico.agregados.numerosFrequencia).sort((a,b)=>b[1]-a[1]).slice(0,20).map(n=>n[0]), 50);
+                adicionarComPeso(Object.entries(historico.agregados.ciclosDetectados).sort((a,b)=>b[1]-a[1]).slice(0,20).map(n=>n[0]), 80);
+                if (crossAnalise) {
+                    crossAnalise.getDigitosComMaiorMomentum(turno, 5).forEach(dm => {
+                        for (let i = 0; i < 10; i++) {
+                            const prefixo = Math.floor(aleatorio.proximo(0,99)).toString().padStart(2,'0'), sufixo = Math.floor(aleatorio.proximo(0,99)).toString().padStart(2,'0');
+                            const num1 = dm.digito + Math.floor(aleatorio.proximo(0,9)).toString() + sufixo, num2 = prefixo + dm.digito + Math.floor(aleatorio.proximo(0,9)).toString();
+                            if (num1.length === 4) scores.set(num1, (scores.get(num1) || 0) + 45);
+                            if (num2.length === 4) scores.set(num2, (scores.get(num2) || 0) + 45);
+                        }
+                    });
+                }
+                return Array.from(scores.entries()).sort((a,b)=>b[1]-a[1]).slice(0,20).map(i=>i[0]);
             }
 
             // ==================== RENDERIZAÇÃO ====================
@@ -1764,433 +933,173 @@
                 cards.forEach((card, index) => {
                     const cardElement = document.createElement('div');
                     cardElement.className = `card ${card.type} ${card.extraClass || ''}`;
-                    
                     let numbersHTML = '';
-                    const numbersToShow = card.numbers.slice(0, 10);
-                    
-                    numbersToShow.forEach(num => {
-                        const badgeClass = card.type === 'pattern' || card.extraClass === 'text-card' ? 'pattern-badge' : 
-                                          card.type === 'shift' ? 'shift-badge' : `${card.type}-badge`;
-                        numbersHTML += `<div class="number-badge ${badgeClass}">${num}</div>`;
+                    card.numbers.slice(0, card.showCount || 10).forEach(num => {
+                        const badgeClass = card.type === 'pattern' || card.extraClass === 'text-card' ? 'pattern-badge' : card.type === 'shift' ? 'shift-badge' : card.type === 'migrate' ? 'migrate-badge' : card.type === 'momentum' ? 'momentum-badge' : `${card.type}-badge`;
+                        numbersHTML += `<div class="number-badge ${badgeClass}" style="font-size: ${card.fontSize || '1rem'};">${num}</div>`;
                     });
-                    
-                    cardElement.innerHTML = `
-                        <div class="card-title">${card.title}</div>
-                        <div class="numbers-grid">
-                            ${numbersHTML}
-                        </div>
-                        <div class="card-description">${card.description}</div>
-                    `;
-                    
+                    cardElement.innerHTML = `<div class="card-title">${card.title}</div><div class="numbers-grid" style="grid-template-columns: repeat(auto-fill, minmax(${card.minCol || '60px'}, 1fr));">${numbersHTML}</div><div class="card-description">${card.description}</div>`;
                     cardElement.style.animationDelay = `${index * 0.1}s`;
                     container.appendChild(cardElement);
                 });
             }
-            
-            function renderizarTodosCards(turno) {
-                if (!dadosLotece) {
-                    console.error('Dados ainda não carregados');
-                    return;
-                }
-                
-                // Debug para verificar ordenação
-                debugOrdenacao(turno);
-                
-                const historico = analisarHistoricoTurno(turno);
-                const previsao = preverProximoSorteio(turno);
-                const sugestoes = gerarSugestoesInteligentes(turno);
-                const centenasData = obterCentenasData(turno);
-                const deslocamentoPrevisoes = preverDeslocamentoCircular(turno);
-                const projecoesUltimo = analisarUltimoSorteioEProjetar(turno);
-                const previsoesCompletas = gerarPrevisoesCompletas(turno);
-                
-                if (!historico || !previsao || !sugestoes || !centenasData) return;
-                
-                document.getElementById('totalSorteios').textContent = historico.totalSorteios;
-                document.getElementById('padroesAtivos').textContent = previsao.estrategiasAtivas.length;
-                
-                // ----- Estatísticas Básicas -----
-                const basicContainer = document.getElementById('basicCards');
-                basicContainer.innerHTML = '';
-                
-                // 1. Milhares quentes
-                const milharesQuentes = Object.entries(historico.agregados.numerosFrequencia)
-                    .sort((a,b) => b[1] - a[1])
-                    .slice(0, 10)
-                    .map(n => n[0]);
-                
-                // 2. Milhares frias (CORRIGIDO)
-                const milharesFrios = Object.entries(historico.agregados.ciclosDetectados)
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 10)
-                    .map(item => item[0]);
-                
-                // 3. Milhares probabilísticas (frequência + atraso) (CORRIGIDO)
-                const milharesProb = Object.entries(historico.agregados.numerosFrequencia)
-                    .map(([num, freq]) => {
-                        const atraso = historico.agregados.ciclosDetectados[num] || 0;
-                        const score = (freq * 3) + (atraso * 4);
-                        return { num, score };
-                    })
-                    .sort((a, b) => b.score - a.score)
-                    .slice(0, 10)
-                    .map(item => item.num);
-                
-                // 4. Dezenas quentes
-                const dezenasQuentes = Object.entries(historico.agregados.finaisFrequencia)
-                    .sort((a,b) => b[1] - a[1])
-                    .slice(0,10)
-                    .map(f => f[0]);
-                
-                // 5. Dezenas frias (CORRIGIDO)
-                const dezenasFrias = Object.entries(historico.agregados.ultimaAparicaoFinal)
-                    .sort((a,b) => b[1] - a[1])
-                    .slice(0, 10)
-                    .map(item => item[0]);
-                
-                // 6. Dezenas probabilísticas
-                const dezenasProb = Object.entries(historico.agregados.finaisFrequencia)
-                    .map(([d, freq]) => {
-                        const atraso = historico.agregados.ultimaAparicaoFinal[d] || 0;
-                        const score = (freq * 30) + (atraso * 2);
-                        return { d, score };
-                    })
-                    .sort((a, b) => b.score - a.score)
-                    .slice(0, 10)
-                    .map(item => item.d);
-                
-                // 7. Prefixos quentes
-                const prefixosQuentes = Object.entries(historico.agregados.prefixosFrequencia)
-                    .sort((a,b) => b[1] - a[1])
-                    .slice(0,10)
-                    .map(p => p[0]);
-                
-                // 8. Prefixos frios (CORRIGIDO)
-                const prefixosFrios = Object.entries(historico.agregados.ultimaAparicaoPrefixo)
-                    .sort((a,b) => b[1] - a[1])
-                    .slice(0, 10)
-                    .map(item => item[0]);
-                
-                // 9. Prefixos probabilísticos
-                const prefixosProb = Object.entries(historico.agregados.prefixosFrequencia)
-                    .map(([p, freq]) => {
-                        const atraso = historico.agregados.ultimaAparicaoPrefixo[p] || 0;
-                        const score = (freq * 30) + (atraso * 2);
-                        return { p, score };
-                    })
-                    .sort((a, b) => b.score - a.score)
-                    .slice(0, 10)
-                    .map(item => item.p);
-                
-                const basicCards = [
-                    { title: "🔥 10 Milhares Mais Quentes", numbers: milharesQuentes, description: "BASE: Frequência histórica (números que mais saíram)", type: "hot" },
-                    { title: "❄️ 10 Milhares Mais Frias", numbers: milharesFrios, description: "BASE: Atraso (números há mais tempo sem sair)", type: "cold" },
-                    { title: "📈 10 Milhares Probabilísticas", numbers: milharesProb, description: "BASE: Frequência + Atraso com pesos calibrados", type: "trend" },
-                    
-                    { title: "🎯 10 Dezenas Mais Quentes", numbers: dezenasQuentes, description: "BASE: Frequência histórica de finais", type: "hot" },
-                    { title: "❄️ 10 Dezenas Mais Frias", numbers: dezenasFrias, description: "BASE: Atraso de finais", type: "cold" },
-                    { title: "📊 10 Dezenas Probabilísticas", numbers: dezenasProb, description: "BASE: Frequência + Atraso de finais", type: "trend" },
-                    
-                    { title: "🏷️ 10 Prefixos Mais Quentes", numbers: prefixosQuentes, description: "BASE: Frequência histórica de prefixos", type: "trend" },
-                    { title: "❄️ 10 Prefixos Mais Frios", numbers: prefixosFrios, description: "BASE: Atraso de prefixos", type: "cold" },
-                    { title: "📊 10 Prefixos Probabilísticos", numbers: prefixosProb, description: "BASE: Frequência + Atraso de prefixos", type: "trend" }
-                ];
-                
-                renderizarCardsNaSecao(basicCards, basicContainer);
-                
-                // ----- Centenas -----
-                const centenasContainer = document.getElementById('centenasCards');
-                centenasContainer.innerHTML = '';
-                const centenasCards = [
-                    { title: "🔥 10 Centenas Mais Quentes", numbers: centenasData.quentes, description: "Centenas (3 últimos dígitos) mais frequentes no histórico", type: "hot" },
-                    { title: "❄️ 10 Centenas Mais Frias", numbers: centenasData.frias, description: "Centenas menos sorteadas ou nunca sorteadas", type: "cold" },
-                    { title: "📈 10 Centenas + Probabilísticas", numbers: centenasData.probabilisticas, description: "Centenas com maior chance baseada em frequência + atraso", type: "trend" }
-                ];
-                renderizarCardsNaSecao(centenasCards, centenasContainer);
-                
-                // ----- Padrões Estratégicos -----
-                const patternContainer = document.getElementById('patternCards');
-                patternContainer.innerHTML = '';
-                const todosCasamentos = [];
-                const todosEspelhamentos = [];
-                const todosFormatos = [];
-                historico.analises.forEach(analise => {
-                    analise.casamentos.forEach(casamento => {
-                        casamento.numeros.forEach(num => { if (!todosCasamentos.includes(num)) todosCasamentos.push(num); });
+
+            // NOVO: Renderização horizontal para cards de texto
+            function renderizarCardsHorizontais(cards, container) {
+                cards.forEach((card, index) => {
+                    const cardElement = document.createElement('div');
+                    cardElement.className = `card-horizontal ${card.type}`;
+                    let badgesHTML = '';
+                    card.numbers.forEach(num => {
+                        const badgeClass = card.type === 'migrate' ? 'badge-migrate' : card.type === 'momentum' ? 'badge-momentum' : card.type === 'pattern' ? 'badge-pattern' : 'badge-era';
+                        badgesHTML += `<span class="horizontal-badge ${badgeClass}">${num}</span>`;
                     });
-                    analise.espelhamentos.forEach(esp => { if (!todosEspelhamentos.includes(esp)) todosEspelhamentos.push(esp); });
-                    analise.formatosEspeciais.forEach(fmt => { if (!todosFormatos.includes(fmt)) todosFormatos.push(fmt); });
+                    cardElement.innerHTML = `<div class="card-title">${card.title}</div><div class="horizontal-badge-list">${badgesHTML}</div><div class="card-description">${card.description}</div>`;
+                    cardElement.style.animationDelay = `${index * 0.1}s`;
+                    container.appendChild(cardElement);
                 });
-                const padroesFrequentes = Object.entries(historico.agregados.padroesFrequencia)
-                    .filter(([p]) => p.includes('ESPELHADO') || p.includes('FORMATO') || p.includes('SEQUENCIA') || p.includes('SOMA'))
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 10)
-                    .map(p => { const nome = p[0].replace('_', ' '); return nome.length > 12 ? nome.substring(0, 12) + '...' : nome; });
-                const patternCards = [
-                    { title: "🔄 Padrões Mais Frequentes", numbers: padroesFrequentes.length ? padroesFrequentes : ["Aguardando dados..."], description: "Padrões estratégicos mais comuns neste turno", type: "pattern", extraClass: "text-card" },
-                    { title: "👥 Números com Casamentos", numbers: todosCasamentos.length ? todosCasamentos.slice(0,10) : ["Nenhum casamento"], description: `Total de ${todosCasamentos.length} números com casamentos detectados`, type: "success" },
-                    { title: "🪞 Números Espelhados", numbers: todosEspelhamentos.length ? todosEspelhamentos.slice(0,10) : ["Nenhum espelhamento"], description: `Total de ${todosEspelhamentos.length} números espelhados encontrados`, type: "pattern" },
-                    { title: "🎭 Números com Formatos Especiais", numbers: todosFormatos.length ? todosFormatos.slice(0,10) : ["Nenhum formato especial"], description: `Total de ${todosFormatos.length} números com formatos especiais`, type: "pattern" }
-                ];
-                renderizarCardsNaSecao(patternCards, patternContainer);
-                
-                // ----- Previsões Inteligentes -----
-                const predictionContainer = document.getElementById('predictionCards');
-                predictionContainer.innerHTML = '';
-                let dezenasParaMostrar = sugestoes.dezenasQuentes;
-                if (dezenasParaMostrar.length < 10) {
-                    const dezenasFrequentes = Object.entries(historico.agregados.finaisFrequencia)
-                        .sort((a,b)=>b[1]-a[1])
-                        .map(d=>d[0])
-                        .filter(d=>!dezenasParaMostrar.includes(d))
-                        .slice(0, 10 - dezenasParaMostrar.length);
-                    dezenasParaMostrar = [...dezenasParaMostrar, ...dezenasFrequentes];
-                }
-                let prefixosParaMostrar = sugestoes.prefixosRecomendados;
-                if (prefixosParaMostrar.length < 10) {
-                    const prefixosFrequentes = Object.entries(historico.agregados.prefixosFrequencia)
-                        .sort((a,b)=>b[1]-a[1])
-                        .map(p=>p[0])
-                        .filter(p=>!prefixosParaMostrar.includes(p))
-                        .slice(0, 10 - prefixosParaMostrar.length);
-                    prefixosParaMostrar = [...prefixosParaMostrar, ...prefixosFrequentes];
-                }
-                
-                const predictionCards = [
-                    { title: "🔮 10 Milhares Fortes Sugeridos", numbers: sugestoes.milharesFortes.length ? sugestoes.milharesFortes.slice(0,10) : ["Aguardando dados..."], description: "Combinações prefixo+final baseadas em padrões ativos", type: "trend" },
-                    { title: "⬅️ 10 Milhares por Deslocamento", numbers: deslocamentoPrevisoes.length ? deslocamentoPrevisoes : ["Aguardando dados..."], description: "Baseado em aprendizado com acertos anteriores + pesos por turno + análise de atraso", type: "shift" },
-                    { title: "🎯 10 Dezenas Quentes", numbers: dezenasParaMostrar.slice(0,10), description: "Finais com alta probabilidade para próximo sorteio", type: "hot" },
-                    { title: "🏷️ 10 Prefixos Recomendados", numbers: prefixosParaMostrar.slice(0,10), description: "Prefixos quentes e/ou atrasados para apostar", type: "warning" },
-                    { title: "📈 Estratégias Ativas", numbers: previsao.estrategiasAtivas.length ? previsao.estrategiasAtivas : ["Nenhuma estratégia ativa"], description: "Padrões dominantes nos últimos sorteios", type: "success", extraClass: "text-card" }
-                ];
-                renderizarCardsNaSecao(predictionCards, predictionContainer);
-                
-                // ----- NOVA SEÇÃO: Projeções do Último Sorteio -----
-                if (projecoesUltimo && projecoesUltimo.projecoes.length > 0) {
-                    const projecoesContainer = document.getElementById('projecoesCards');
-                    projecoesContainer.innerHTML = '';
-                    
-                    const numerosProjetados = projecoesUltimo.projecoes.map(p => p.numero);
-                    const descricao = `Baseado nos padrões do último sorteio: ${projecoesUltimo.ultimo_sorteio.join(', ')}`;
-                    
-                    const projecoesCard = [
-                        { title: "🎯 Projeções do Último Sorteio", numbers: numerosProjetados, description: descricao, type: "shift" }
-                    ];
-                    
-                    renderizarCardsNaSecao(projecoesCard, projecoesContainer);
-                }
-                
-                // ----- NOVA SEÇÃO: Previsão com Machine Learning -----
-                if (previsoesCompletas && previsoesCompletas.length > 0) {
-                    const previsaoDigitoContainer = document.getElementById('previsaoDigitoCards');
-                    previsaoDigitoContainer.innerHTML = '';
-                    
-                    const previsaoCard = [
-                        { 
-                            title: "🤖 TOP 20 Números com ML", 
-                            numbers: previsoesCompletas.slice(0, 20), 
-                            description: `Baseado em ML + Análise Temporal + Dígitos + ${historico.totalSorteios} sorteios analisados`, 
-                            type: "trend" 
-                        }
-                    ];
-                    
-                    renderizarCardsNaSecao(previsaoCard, previsaoDigitoContainer);
-                }
-                
-                // ----- Ciclos e Atrasados -----
-                const cycleContainer = document.getElementById('cycleCards');
-                cycleContainer.innerHTML = '';
-                const atrasados = Object.entries(historico.agregados.ciclosDetectados).sort((a,b)=>b[1]-a[1]).slice(0,15);
-                const atrasadosNumeros = atrasados.slice(0,10).map(n=>n[0]);
-                const maisAtrasado = atrasados[0] ? `${atrasados[0][0]} (${atrasados[0][1]} sorteios)` : 'N/A';
-                const somaMaisComum = Object.entries(historico.agregados.somasFrequencia).sort((a,b)=>b[1]-a[1]).slice(0,10).map(s=>s[0]);
-                const finaisAtrasados = previsao.alertas.map(a=>{ const m = a.match(/Final (\d+)/); return m ? m[1] : null; }).filter(f=>f!==null).slice(0,10);
-                const cycleCards = [
-                    { title: "⏰ 10 Números Mais Atrasados", numbers: atrasadosNumeros, description: `Mais atrasado: ${maisAtrasado}`, type: "danger" },
-                    { title: "🔄 Ciclos de Retorno", numbers: [
-                        `7 dias: ${Math.round(Object.values(historico.agregados.ciclosDetectados).filter(c => c >= 6 && c <= 8).length / Object.keys(historico.agregados.ciclosDetectados).length * 100)}%`,
-                        `14 dias: ${Math.round(Object.values(historico.agregados.ciclosDetectados).filter(c => c >= 13 && c <= 15).length / Object.keys(historico.agregados.ciclosDetectados).length * 100)}%`
-                    ], description: "Frequência de retorno por ciclo temporal", type: "warning", extraClass: "text-card" },
-                    { title: "📊 10 Somas Mais Frequentes", numbers: somaMaisComum.length ? somaMaisComum : ["Aguardando dados..."], description: "Somas dos dígitos que mais aparecem", type: "trend" },
-                    { title: "🎯 10 Finais Atrasados", numbers: finaisAtrasados.length ? finaisAtrasados : ["Nenhum final atrasado"], description: "Finais com alta probabilidade de retorno", type: "danger" }
-                ];
-                renderizarCardsNaSecao(cycleCards, cycleContainer);
-                
-                // ----- Estratégias Dominantes (com mensagens completas) -----
-                const strategyContainer = document.getElementById('strategyCards');
-                strategyContainer.innerHTML = '';
-                const strategyCards = [
-                    { title: "🎭 Estratégias Recomendadas", numbers: sugestoes.estrategias, description: "Abordagens baseadas nos padrões atuais", type: "success", extraClass: "text-card" },
-                    { title: "⚠️ Alertas de Probabilidade", numbers: previsao.alertas.length ? previsao.alertas : ["Nenhum alerta no momento"], description: "Atenção a estes padrões atrasados", type: "warning", extraClass: "text-card" },
-                    { title: "📈 Padrões Esperados", numbers: previsao.padroesEsperados.length ? previsao.padroesEsperados : ["Padrões variados"], description: "Padrões com alta chance no próximo sorteio", type: "trend", extraClass: "text-card" },
-                    { title: "💡 Dicas Inteligentes", numbers: [
-                        "🔥 Combine prefixos quentes com finais quentes para gerar milhares com alta probabilidade.",
-                        "⬅️ Observe o padrão de deslocamento: números tendem a rotacionar (ABCD → BCDA) entre sorteios, geralmente com atraso de 1-3 sorteios.",
-                        "📊 Pesos calibrados por turno: Manhã prefere deslocamento duplo, Tarde prefere direita, Tarde II prefere esquerda.",
-                        "🔁 Prefira números com padrões reconhecíveis (espelhados, AABB, sequências) pois tendem a se repetir.",
-                        "⏳ Acompanhe ciclos de retorno: números costumam reaparecer entre 7 e 14 sorteios (ponto ideal para apostar).",
-                        "👥 Monitore casamentos de prefixos: quando um prefixo se repete no mesmo sorteio, é sinal de tendência.",
-                        "🔢 Analise cada posição decimal: milhar, centena, dezena e unidade têm comportamentos diferentes por turno.",
-                        "🎯 Considere centenas com bom histórico e que estão há mais de 10 sorteios sem sair."
-                    ], description: "Estratégias detalhadas para aumentar suas chances", type: "pattern", extraClass: "text-card" }
-                ];
-                renderizarCardsNaSecao(strategyCards, strategyContainer);
             }
-            
-            // ==================== CARREGAMENTO DOS DADOS ====================
+
+            function renderizarTodosCards(turno) {
+                if (!dadosLotece) return;
+                const hashDados = gerarHashDados(dadosLotece);
+                const semente = hashDados + turno + new Date().getHours();
+                const aleatorio = new AleatorioControlado(semente);
+                const crossAnalise = new CrossAnaliseTemporal(dadosLotece);
+                const historico = analisarHistoricoTurno(turno);
+                if (!historico) return;
+
+                document.getElementById('dataHash').textContent = hashDados;
+                document.getElementById('currentTurno').textContent = turno;
+                document.getElementById('totalSorteios').textContent = historico.totalSorteios;
+                document.getElementById('migracoesInfo').textContent = crossAnalise.migracoesDetectadas.length;
+                const digitosMomentum = crossAnalise.getDigitosComMaiorMomentum(turno, 1);
+                if (digitosMomentum.length > 0) {
+                    const dm = digitosMomentum[0];
+                    document.getElementById('momentumInfo').textContent = `${dm.digito} (${dm.momentum > 0 ? '+' : ''}${dm.momentum}%)`;
+                    document.getElementById('momentumInfo').className = `info-value momentum-${dm.status}`;
+                }
+                const previsao = preverProximoSorteio(turno);
+                document.getElementById('padroesAtivos').textContent = previsao ? previsao.estrategiasAtivas.length : 0;
+
+                // 20 MILHARES
+                const milharesContainer = document.getElementById('milharesProbCards'); milharesContainer.innerHTML = '';
+                renderizarCardsNaSecao([{ title: `📈 20 Milhares + Prováveis (${turno})`, numbers: gerarMilharesProbabilisticos(turno, crossAnalise, aleatorio, 20), showCount: 20, minCol: '55px', fontSize: '0.9rem', description: `Cross-análise: Frequência + Atraso + Momentum + Migrações | Hash: ${hashDados}`, type: "trend" }], milharesContainer);
+
+                // 20 CENTENAS
+                const centenasContainer = document.getElementById('centenasProbCards'); centenasContainer.innerHTML = '';
+                renderizarCardsNaSecao([{ title: `🔢 20 Centenas + Prováveis (${turno})`, numbers: gerarCentenasProbabilisticas(turno, crossAnalise, aleatorio, 20), showCount: 20, minCol: '55px', fontSize: '0.9rem', description: `Centenas (3 dígitos) com maior score: Frequência × Atraso + Bônus Momentum`, type: "trend" }], centenasContainer);
+
+                // 20 DEZENAS
+                const dezenasContainer = document.getElementById('dezenasProbCards'); dezenasContainer.innerHTML = '';
+                renderizarCardsNaSecao([{ title: `🎯 20 Dezenas + Prováveis (${turno})`, numbers: gerarDezenasProbabilisticas(turno, crossAnalise, aleatorio, 20), showCount: 20, minCol: '55px', fontSize: '0.9rem', description: `Dezenas (2 dígitos finais) com maior score: Frequência × Atraso + Bônus Momentum`, type: "trend" }], dezenasContainer);
+
+                // MIGRAÇÕES E MOMENTUM (HORIZONTAL)
+                const migrationContainer = document.getElementById('migrationCards'); migrationContainer.innerHTML = '';
+                const migracoesRecentes = crossAnalise.getMigracoesRecentes(6);
+                const ciclo = crossAnalise.ciclosDominancia[turno];
+                const migrationCards = [
+                    { title: "🔄 Top Migrações Detectadas", numbers: migracoesRecentes.length > 0 ? migracoesRecentes.map(m => `${m.elemento}: ${m.turnosVisitados.join('→')} (${m.totalAparicoes}x)`) : ["Adicione mais dados"], description: "Padrões que migraram entre turnos diferentes", type: "migrate" },
+                    { title: "📈 Momentum dos Dígitos", numbers: crossAnalise.getDigitosComMaiorMomentum(turno, 8).map(d => `${d.digito}: ${d.status === 'up' ? '↑' : d.status === 'down' ? '↓' : '→'} ${d.momentum}%`), description: "↑ Ascensão (+20%) | → Estável | ↓ Queda (-20%)", type: "momentum" },
+                    { title: "👑 Era Atual por Turno", numbers: TURNOS.map(t => { const c = crossAnalise.ciclosDominancia[t]; return `${t}: ${c?.eraAtual?.digitoDominante || '?'} (${c?.eraAtual?.frequencia || 0}x)`; }), description: "Dígito dominante em cada turno na era atual", type: "migrate" }
+                ];
+                renderizarCardsHorizontais(migrationCards, migrationContainer);
+
+                // PREVISÃO ML
+                const previsaoContainer = document.getElementById('previsaoDigitoCards'); previsaoContainer.innerHTML = '';
+                renderizarCardsNaSecao([{ title: `🤖 TOP 20 ML Cross-Turno (${hashDados})`, numbers: gerarPrevisoesCompletasCrossTurno(turno, aleatorio, crossAnalise), showCount: 20, minCol: '55px', fontSize: '0.9rem', description: `Quentes + Atrasados + Momentum + ${crossAnalise.migracoesDetectadas.length} migrações analisadas`, type: "trend" }], previsaoContainer);
+
+                // DICAS ESTRATÉGICAS (HORIZONTAL)
+                const strategyContainer = document.getElementById('strategyCards'); strategyContainer.innerHTML = '';
+                const strategyCards = [
+                    { title: "💡 Estratégias Cross-Turno", numbers: ["🔄 Migrações: Padrões saltam entre turnos a cada 2-3 meses - siga o fluxo!", "📈 Momentum: Dígitos em ascensão (>+20%) recebem bônus de +50pts nos palpites", "👑 Eras: Cada turno tem um dígito dominante que dura 15-25 dias", "🎯 Cross-Previsão: Se um padrão sumiu da Manhã, procure na Tarde/Noite", "🔁 Ciclos: Finais migram em círculo Manhã→Tarde→Tarde II→Noite→Manhã", "⚠️ Viradas: Mudanças bruscas de dominância ocorrem a cada 4-7 dias", "📊 O hash dos dados garante variabilidade real a cada atualização do ARRAY", "🧠 Momentum negativo (<-20%) = dígito em queda - evite apostar!"], description: "Estratégias baseadas em cross-análise temporal e ciclos de dominância", type: "pattern" }
+                ];
+                renderizarCardsHorizontais(strategyCards, strategyContainer);
+            }
+
+            function preverProximoSorteio(turno) {
+                const historico = analisarHistoricoTurno(turno);
+                if (!historico) return { estrategiasAtivas: [], alertas: [], padroesEsperados: [] };
+                const ultimos5 = historico.analises.slice(0, 5);
+                const estrategias = { ESPELHAMENTO: 0, CASAMENTO: 0, FORMATO_ESPECIAL: 0 };
+                ultimos5.forEach(a => { if (a.espelhamentos.length > 0) estrategias.ESPELHAMENTO++; if (a.casamentos.length > 0) estrategias.CASAMENTO++; if (a.formatosEspeciais.length > 0) estrategias.FORMATO_ESPECIAL++; });
+                const ativas = [];
+                for (const [e, c] of Object.entries(estrategias)) { if (c >= 3) ativas.push(e); }
+                const finaisAtrasados = Object.entries(historico.agregados.finaisFrequencia).filter(([f]) => historico.analises.findIndex(a => a.finais.includes(f)) > 5).slice(0, 5);
+                const alertas = finaisAtrasados.map(([f]) => `Final ${f} atrasado`);
+                const padroes = [];
+                if (ativas.includes('ESPELHAMENTO')) padroes.push('Números espelhados');
+                if (ativas.includes('CASAMENTO')) padroes.push('Casamento de prefixos');
+                if (ativas.includes('FORMATO_ESPECIAL')) padroes.push('Formatos AABB/ABAB');
+                return { estrategiasAtivas: ativas, alertas, padroesEsperados: padroes };
+            }
+
+            // ==================== CARREGAMENTO ====================
             async function carregarDados() {
                 try {
                     const response = await fetch('data.json');
-                    if (!response.ok) throw new Error('Erro ao carregar data.json');
+                    if (!response.ok) throw new Error('Erro ao carregar');
                     dadosLotece = await response.json();
-                    document.getElementById('currentTurno').textContent = 'Manhã';
+                    document.getElementById('dataHash').textContent = gerarHashDados(dadosLotece);
                     renderizarTodosCards('Manhã');
-                } catch (error) {
-                    console.error('Falha no carregamento dos dados:', error);
-                    alert('Não foi possível carregar os dados. Verifique se o arquivo data.json existe e é válido.');
-                }
+                } catch (error) { console.error('Falha:', error); alert('Erro ao carregar dados. Verifique o data.json.'); }
             }
-            
-            // ==================== INICIALIZAÇÃO E EVENTOS ====================
+
+            // ==================== INICIALIZAÇÃO ====================
             document.addEventListener('DOMContentLoaded', function() {
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.register('./sw.js')
-                        .then(reg => console.log('Service Worker registrado', reg))
-                        .catch(err => console.log('Erro ao registrar SW', err));
-                }
-                
+                if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW erro', err)); }
                 const turnoBtns = document.querySelectorAll('.turno-btn');
                 const gerarBtn = document.getElementById('gerarBtn');
-                const turnoInfo = document.getElementById('currentTurno');
                 let turnoSelecionado = 'Manhã';
-                
                 turnoBtns.forEach(btn => {
                     btn.addEventListener('click', function() {
                         turnoBtns.forEach(b => b.classList.remove('active'));
                         this.classList.add('active');
                         turnoSelecionado = this.dataset.turno;
-                        turnoInfo.textContent = turnoSelecionado;
-                        if (dadosLotece) renderizarTodosCards(turnoSelecionado);
+                        if (dadosLotece) { document.getElementById('dataHash').textContent = gerarHashDados(dadosLotece); renderizarTodosCards(turnoSelecionado); }
                     });
                 });
-                
                 gerarBtn.addEventListener('click', function() {
                     this.style.transform = 'translateY(0)';
                     setTimeout(() => this.style.transform = 'translateY(-3px)', 150);
-                    if (dadosLotece) renderizarTodosCards(turnoSelecionado);
+                    if (dadosLotece) { document.getElementById('dataHash').textContent = gerarHashDados(dadosLotece); renderizarTodosCards(turnoSelecionado); }
                 });
-                
                 carregarDados();
             });
-            
-            // ==================== FUNÇÕES DE APOIO (calculadora, apostas) ====================
+
+            // ==================== FUNÇÕES AUXILIARES ====================
             function calcularPremio() {
                 const valor = parseFloat(document.getElementById('valor_aposta').value);
                 const modalidade = parseFloat(document.getElementById('modalidade').value);
                 const faixa = parseFloat(document.getElementById('faixa').value);
-                
-                if (isNaN(valor) || valor <= 0) {
-                    alert("Por favor, insira um valor válido para a aposta!");
-                    return;
-                }
-                
+                if (isNaN(valor) || valor <= 0) { alert("Valor inválido!"); return; }
                 const ganho = valor * modalidade * faixa;
                 const resultado = document.getElementById('resultado_calc');
-                resultado.innerHTML = `💰 Ganho Estimado: R$ ${ganho.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                resultado.innerHTML = `💰 Ganho Estimado: R$ ${ganho.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
                 resultado.style.display = 'block';
             }
-
-            function limparCalc() {
-                document.getElementById('valor_aposta').value = '';
-                document.getElementById('modalidade').selectedIndex = 0;
-                document.getElementById('faixa').selectedIndex = 0;
-                document.getElementById('resultado_calc').style.display = 'none';
-            }
-            
+            function limparCalc() { document.getElementById('valor_aposta').value = ''; document.getElementById('modalidade').selectedIndex = 0; document.getElementById('faixa').selectedIndex = 0; document.getElementById('resultado_calc').style.display = 'none'; }
             function inserirAposta() {
-                const campoBilhetes = document.getElementById('inBilhetes');
-                const campoValor = document.getElementById('inValor');
-                const bilhetesRaw = campoBilhetes.value.split(',').map(s => s.trim()).filter(s => s !== "");
-                const valor = parseFloat(campoValor.value) || 0;
-                const intSelected = document.getElementById('inInt').value;
-
-                if (bilhetesRaw.length === 0 || valor === 0) {
-                    alert("Preencha Bilhetes e Valor antes de inserir.");
-                    return;
-                }
-
-                bilhetesRaw.forEach(b => {
-                    apostasAcumuladas.push({ num: b, int: intSelected, val: valor });
-                });
-
-                const listaVisual = document.getElementById('listaVisual');
-                const card = document.createElement('div');
-                card.style.background = '#f8fafc';
-                card.style.borderLeft = '4px solid #d1e9ff';
-                card.style.padding = '10px';
-                card.style.marginBottom = '8px';
-                card.style.borderRadius = '4px';
-                card.style.display = 'flex';
-                card.style.justifyContent = 'space-between';
-                card.style.fontSize = '0.9rem';
-                card.innerHTML = `<span><strong>${bilhetesRaw.join(', ')}</strong></span> <span>${intSelected} | R$ ${valor.toFixed(2)}</span>`;
-                listaVisual.appendChild(card);
-
-                campoBilhetes.value = '';
-                campoValor.value = '';
-                campoBilhetes.focus();
+                const campoBilhetes = document.getElementById('inBilhetes'), campoValor = document.getElementById('inValor');
+                const bilhetesRaw = campoBilhetes.value.split(',').map(s=>s.trim()).filter(s=>s);
+                const valor = parseFloat(campoValor.value) || 0, intSelected = document.getElementById('inInt').value;
+                if (bilhetesRaw.length === 0 || valor === 0) { alert("Preencha Bilhetes e Valor!"); return; }
+                bilhetesRaw.forEach(b => apostasAcumuladas.push({num:b,int:intSelected,val:valor}));
+                const listaVisual = document.getElementById('listaVisual'), card = document.createElement('div');
+                card.style.cssText = 'background:#f8fafc;border-left:4px solid #d1e9ff;padding:10px;margin-bottom:8px;border-radius:4px;display:flex;justify-content:space-between;font-size:0.9rem;';
+                card.innerHTML = `<span><strong>${bilhetesRaw.join(', ')}</strong></span><span>${intSelected} | R$ ${valor.toFixed(2)}</span>`;
+                listaVisual.appendChild(card); campoBilhetes.value = ''; campoValor.value = ''; campoBilhetes.focus();
             }
-
-            function limparTudo() {
-                apostasAcumuladas = [];
-                document.getElementById('listaVisual').innerHTML = '<span style="font-weight: 600; font-size: 0.85rem; color: #475569; display: block;">APOSTAS NO BILHETE:</span>';
-                document.getElementById('inBilhetes').value = '';
-                document.getElementById('inValor').value = '';
-                document.getElementById('inBrinde').value = '';
-            }
-
+            function limparTudo() { apostasAcumuladas = []; document.getElementById('listaVisual').innerHTML = '<span style="font-weight:600;font-size:0.85rem;color:#475569;">APOSTAS NO BILHETE:</span>'; document.getElementById('inBilhetes').value = ''; document.getElementById('inValor').value = ''; document.getElementById('inBrinde').value = ''; }
             function gerarRelatorio() {
-                if (apostasAcumuladas.length === 0) {
-                    alert("Insira pelo menos uma aposta primeiro!");
-                    return;
-                }
-
-                const turno = document.getElementById('inTurno').value;
-                const brinde = document.getElementById('inBrinde').value;
-                const intBrinde = document.getElementById('inIntBrinde').value;
-
-                document.getElementById('outTurno').textContent = turno;
-                const corpo = document.getElementById('outCorpo');
-                corpo.innerHTML = "";
-                
-                apostasAcumuladas.forEach(a => {
-                    corpo.innerHTML += `
-                        <tr>
-                            <td style="text-align: left;">${a.num}</td>
-                            <td style="text-align: right;">${a.int}</td>
-                            <td style="text-align: right;">R$ ${a.val.toFixed(2).replace('.', ',')}</td>
-                        </tr>
-                    `;
-                });
-
-                const areaB = document.getElementById('areaBrinde');
-                if (brinde) {
-                    areaB.style.display = 'block';
-                    document.getElementById('outBrindeNum').textContent = brinde;
-                    document.getElementById('outBrindeInt').textContent = intBrinde;
-                } else {
-                    areaB.style.display = 'none';
-                }
-
-                const alvo = document.getElementById('pule-digital');
-                setTimeout(() => {
-                    html2canvas(alvo, { scale: 3 }).then(canvas => {
-                        const link = document.createElement('a');
-                        link.download = `aposta-${Date.now()}.jpg`;
-                        link.href = canvas.toDataURL("image/jpeg", 0.95);
-                        link.click();
-                    });
-                }, 200);
+                if (apostasAcumuladas.length === 0) { alert("Insira pelo menos uma aposta!"); return; }
+                document.getElementById('outTurno').textContent = document.getElementById('inTurno').value;
+                const corpo = document.getElementById('outCorpo'); corpo.innerHTML = '';
+                apostasAcumuladas.forEach(a => corpo.innerHTML += `<tr><td style="text-align:left;">${a.num}</td><td style="text-align:right;">${a.int}</td><td style="text-align:right;">R$ ${a.val.toFixed(2).replace('.',',')}</td></tr>`);
+                const brinde = document.getElementById('inBrinde').value, areaB = document.getElementById('areaBrinde');
+                if (brinde) { areaB.style.display = 'block'; document.getElementById('outBrindeNum').textContent = brinde; document.getElementById('outBrindeInt').textContent = document.getElementById('inIntBrinde').value; }
+                else areaB.style.display = 'none';
+                setTimeout(() => { html2canvas(document.getElementById('pule-digital'),{scale:3}).then(canvas => { const link = document.createElement('a'); link.download = `aposta-${Date.now()}.jpg`; link.href = canvas.toDataURL("image/jpeg",0.95); link.click(); }); }, 200);
             }
         </script>
     </div>
